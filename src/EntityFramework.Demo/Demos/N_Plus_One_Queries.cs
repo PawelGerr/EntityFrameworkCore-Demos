@@ -142,7 +142,7 @@ namespace EntityFramework.Demo.Demos
 		}
 
 		/// <summary>
-		/// == Executes 6 queries ==
+		/// == Executes 2 queries ==
 		///
 		/// a) 1 query for product groups
 		///
@@ -153,15 +153,25 @@ namespace EntityFramework.Demo.Demos
 		/// 	WHERE
 		/// 		CHARINDEX(N'Group', [g].[Name]) > 0
 		///
-		/// b) 5 queries for products (i.e. 1 query per fetched product group)
-		///
-		/// 	SELECT
-		/// 		[p].[Id], [p].[GroupId], [p].[Name]
+		/// b) 1 query for products
+		///	SELECT
+		/// 		[g.Products].[Id], [g.Products].[GroupId], [g.Products].[Name], [t].[Id]
 		/// 	FROM
-		/// 		[Products] AS [p]
+		/// 		[Products] AS [g.Products]
+		/// 		INNER JOIN
+		/// 		(
+		/// 			SELECT
+		/// 				[g0].[Id]
+		/// 			FROM
+		/// 				[ProductGroups] AS[g0]
+		/// 			WHERE
+		/// 				CHARINDEX(N'Group', [g0].[Name]) > 0
+		/// 		) AS [t]
+		/// 			ON [g.Products].[GroupId] = [t].[Id]
 		/// 	WHERE
-		/// 		(CHARINDEX(N''1'', [p].[Name]) > 0) AND
-		/// 		(@_outer_Id = [p].[GroupId])
+		/// 		CHARINDEX(N'1', [g.Products].[Name]) > 0
+		/// 	ORDER BY
+		/// 		[t].[Id]
 		/// </summary>
 		public void FetchGroups_Select_Filtered_Products_with_ToList()
 		{
