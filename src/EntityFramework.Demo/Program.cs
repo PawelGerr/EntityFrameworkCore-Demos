@@ -2,9 +2,12 @@
 using System.Linq;
 using EntityFramework.Demo.Demos;
 using EntityFramework.Demo.Model;
+using EntityFramework.Demo.TphModel;
+using EntityFramework.Demo.TptDemo;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace EntityFramework.Demo
 {
@@ -15,7 +18,38 @@ namespace EntityFramework.Demo
 			var loggerFactory = GetLoggerFactory();
 			var logger = loggerFactory.CreateLogger<DemosBase>();
 
-			using (var ctx = GetContext(loggerFactory))
+			// ExecuteDemoDbQueries(loggerFactory, logger);
+			// ExecuteTphQueries(loggerFactory, logger);
+			ExecuteTptQueries(loggerFactory, logger);
+		}
+
+		private static void ExecuteTphQueries(ILoggerFactory loggerFactory, ILogger logger)
+		{
+			using (var ctx = GetTphContext(loggerFactory))
+			{
+				if (!ctx.People.Any())
+					ctx.SeedData();
+
+				logger.LogInformation("[TPH] Customers: {@customers}", ctx.Customers);
+				logger.LogInformation("[TPH] Employees: {@employees}", ctx.Employees);
+			}
+		}
+
+		private static void ExecuteTptQueries(ILoggerFactory loggerFactory, ILogger logger)
+		{
+			using (var ctx = GetTptContext(loggerFactory))
+			{
+				if (!ctx.People.Any())
+					ctx.SeedData();
+
+				logger.LogInformation("[TPT] Customers: {@customers}", ctx.Customers);
+				logger.LogInformation("[TPT] Employees: {@employees}", ctx.Employees);
+			}
+		}
+
+		private static void ExecuteDemoDbQueries(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
+		{
+			using (var ctx = GetDemoContext(loggerFactory))
 			{
 				if (!ctx.Products.Any())
 					ctx.SeedData();
@@ -43,23 +77,49 @@ namespace EntityFramework.Demo
 		private static ILoggerFactory GetLoggerFactory()
 		{
 			var serilog = new LoggerConfiguration()
-						.WriteTo.Console()
-						.MinimumLevel.Verbose()
-						.Destructure.AsScalar<Product>()
-						.Destructure.AsScalar<ProductGroup>()
-						.CreateLogger();
+								.WriteTo.Console()
+								.MinimumLevel.Verbose()
+								.Destructure.AsScalar<Product>()
+								.Destructure.AsScalar<ProductGroup>()
+								.CreateLogger();
 
 			return new LoggerFactory()
 				.AddSerilog(serilog);
 		}
 
-		private static DemoDbContext GetContext(ILoggerFactory loggerFactory)
+		private static DemoDbContext GetDemoContext(ILoggerFactory loggerFactory)
 		{
 			var builder = new DbContextOptionsBuilder<DemoDbContext>()
-						.UseSqlServer("Server=(local);Database=Demo;Trusted_Connection=True;MultipleActiveResultSets=true")
-						.UseLoggerFactory(loggerFactory);
+								.UseSqlServer("Server=(local);Database=Demo;Trusted_Connection=True;MultipleActiveResultSets=true")
+								.UseLoggerFactory(loggerFactory);
 
 			var ctx = new DemoDbContext(builder.Options);
+
+			ctx.Database.EnsureCreated();
+
+			return ctx;
+		}
+
+		private static TphDbContext GetTphContext(ILoggerFactory loggerFactory)
+		{
+			var builder = new DbContextOptionsBuilder<TphDbContext>()
+								.UseSqlServer("Server=(local);Database=TphDemo;Trusted_Connection=True;MultipleActiveResultSets=true")
+								.UseLoggerFactory(loggerFactory);
+
+			var ctx = new TphDbContext(builder.Options);
+
+			ctx.Database.EnsureCreated();
+
+			return ctx;
+		}
+
+		private static TptDbContext GetTptContext(ILoggerFactory loggerFactory)
+		{
+			var builder = new DbContextOptionsBuilder<TptDbContext>()
+								.UseSqlServer("Server=(local);Database=TptDemo;Trusted_Connection=True;MultipleActiveResultSets=true")
+								.UseLoggerFactory(loggerFactory);
+
+			var ctx = new TptDbContext(builder.Options);
 
 			ctx.Database.EnsureCreated();
 
