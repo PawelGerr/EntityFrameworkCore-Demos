@@ -21,7 +21,7 @@ namespace EntityFramework.Demo.TptModel.DatabaseFirst
 													{
 														entity.Property(e => e.Id).ValueGeneratedNever();
 
-														entity.HasOne(d => d.IdNavigation)
+														entity.HasOne(d => d.Person)
 																.WithOne(p => p.Customer)
 																.HasForeignKey<Customer>(d => d.Id);
 													});
@@ -30,7 +30,7 @@ namespace EntityFramework.Demo.TptModel.DatabaseFirst
 													{
 														entity.Property(e => e.Id).ValueGeneratedNever();
 
-														entity.HasOne(d => d.IdNavigation)
+														entity.HasOne(d => d.Person)
 																.WithOne(p => p.Employee)
 																.HasForeignKey<Employee>(d => d.Id);
 													});

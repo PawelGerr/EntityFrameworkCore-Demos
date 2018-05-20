@@ -8,6 +8,6 @@ namespace EntityFramework.Demo.TptModel.DatabaseFirst
         public Guid Id { get; set; }
         public DateTime DateOfBirth { get; set; }
 
-        public Person IdNavigation { get; set; }
+        public Person Person { get; set; }
     }
 }

@@ -1,10 +1,16 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using EntityFramework.Demo.Demos;
 using EntityFramework.Demo.Model;
 using EntityFramework.Demo.TphModel.CodeFirst;
 using EntityFramework.Demo.TptModel.CodeFirst;
+using EntityFramework.Demo.TptModel.DatabaseFirst;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Design.Internal;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -18,9 +24,12 @@ namespace EntityFramework.Demo
 			var loggerFactory = GetLoggerFactory();
 			var logger = loggerFactory.CreateLogger<DemosBase>();
 
-			// ExecuteDemoDbQueries(loggerFactory, logger);
+			ExecuteDemoDbQueries(loggerFactory, logger);
 			ExecuteTphQueries(loggerFactory, logger);
 			ExecuteTptQueries(loggerFactory, logger);
+			ExecuteTptDatabaseFirstQueries(loggerFactory, logger);
+
+			// DebugScaffolding();
 		}
 
 		private static void ExecuteDemoDbQueries(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
@@ -81,11 +90,55 @@ namespace EntityFramework.Demo
 			}
 		}
 
+		private static void ExecuteTptDatabaseFirstQueries(ILoggerFactory loggerFactory, ILogger logger)
+		{
+			using (var ctx = GetScaffoldedTptContext(loggerFactory))
+			{
+				var demos = new Tpt_DatabseFirst_Queries(ctx, logger);
+
+				if (!ctx.People.Any())
+					demos.SeedData();
+
+				logger.LogInformation(" ==== {caption} ====", nameof(Tpt_DatabseFirst_Queries));
+
+				demos.FetchCustomers();
+				demos.FetchEmployees();
+			}
+		}
+
+		private static void DebugScaffolding()
+		{
+			var services = new ServiceCollection()
+				.AddEntityFrameworkDesignTimeServices();
+
+			var serviceProvider = services.BuildServiceProvider();
+
+			var operationReporter = serviceProvider.GetRequiredService<IOperationReporter>();
+			var currentAssembly = Assembly.GetExecutingAssembly();
+			var projDir = Environment.CurrentDirectory;
+			var designArgs = Array.Empty<string>();
+
+			var dbOperations = new DatabaseOperations(operationReporter, currentAssembly, projDir, "EntityFramework.Demo", "C#", designArgs);
+			var files = dbOperations.ScaffoldContext(
+																 "Microsoft.EntityFrameworkCore.SqlServer",
+																 "Server=(local);Database=TptDemo;Trusted_Connection=True;MultipleActiveResultSets=true",
+																 Path.Combine(projDir, "./TptModel/DatabaseFirst"),
+																 Path.Combine(projDir, "./TptModel/DatabaseFirst"),
+																 "ScaffoldedTptDbContext",
+																 Enumerable.Empty<string>(),
+																 Enumerable.Empty<string>(),
+																 false,
+																 true,
+																 false
+																);
+
+		}
+
 		private static ILoggerFactory GetLoggerFactory()
 		{
 			var serilog = new LoggerConfiguration()
 								.WriteTo.Console()
-								.MinimumLevel.Verbose()
+								.MinimumLevel.Information()
 								.Destructure.AsScalar<Product>()
 								.Destructure.AsScalar<ProductGroup>()
 								.CreateLogger();
@@ -107,6 +160,11 @@ namespace EntityFramework.Demo
 		public static TptDbContext GetTptContext(ILoggerFactory loggerFactory)
 		{
 			return GetDbContext<TptDbContext>(loggerFactory, "TptDemo", o => new TptDbContext(o));
+		}
+
+		public static ScaffoldedTptDbContext GetScaffoldedTptContext(ILoggerFactory loggerFactory)
+		{
+			return GetDbContext<ScaffoldedTptDbContext>(loggerFactory, "TptDemo", o => new ScaffoldedTptDbContext(o));
 		}
 
 		private static T GetDbContext<T>(ILoggerFactory loggerFactory, string dbName, Func<DbContextOptions<T>, T> ctxFactory)
