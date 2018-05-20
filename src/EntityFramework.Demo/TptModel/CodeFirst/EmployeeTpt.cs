@@ -1,8 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
-using EntityFramework.Demo.TphModel;
 
-namespace EntityFramework.Demo.TptDemo
+namespace EntityFramework.Demo.TptModel.CodeFirst
 {
 	public class EmployeeTpt
 	{

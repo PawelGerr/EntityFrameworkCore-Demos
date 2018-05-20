@@ -1,8 +1,7 @@
 ﻿using System;
-using EntityFramework.Demo.TphModel;
 using Microsoft.EntityFrameworkCore;
 
-namespace EntityFramework.Demo.TptDemo
+namespace EntityFramework.Demo.TptModel.CodeFirst
 {
 	public class TptDbContext : DbContext
 	{

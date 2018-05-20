@@ -2,8 +2,8 @@
 using System.Linq;
 using EntityFramework.Demo.Demos;
 using EntityFramework.Demo.Model;
-using EntityFramework.Demo.TphModel;
-using EntityFramework.Demo.TptDemo;
+using EntityFramework.Demo.TphModel.CodeFirst;
+using EntityFramework.Demo.TptModel.CodeFirst;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -19,8 +19,30 @@ namespace EntityFramework.Demo
 			var logger = loggerFactory.CreateLogger<DemosBase>();
 
 			// ExecuteDemoDbQueries(loggerFactory, logger);
-			// ExecuteTphQueries(loggerFactory, logger);
+			ExecuteTphQueries(loggerFactory, logger);
 			ExecuteTptQueries(loggerFactory, logger);
+		}
+
+		private static void ExecuteDemoDbQueries(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
+		{
+			using (var ctx = GetDemoContext(loggerFactory))
+			{
+				if (!ctx.Products.Any())
+					ctx.SeedData();
+
+				logger.LogInformation(" ==== {caption} ====", nameof(N_Plus_One_Queries));
+				var demos = new N_Plus_One_Queries(ctx, logger);
+
+				demos.FetchGroups_Include_Products();
+				demos.FetchGroups_Select_All_Products();
+				demos.FetchGroups_Select_Filtered_Products_without_ToList();
+				demos.FetchGroups_Select_Filtered_Products_with_ToList();
+				demos.FetchGroups_Select_First_Product();
+				demos.FetchProducts_With_ProductGroup();
+
+				demos.FetchGroups_Select_Filtered_Products_via_GroupJoin();
+				demos.FetchGroups_Select_Filtered_Products_via_Lookup();
+			}
 		}
 
 		private static void ExecuteTphQueries(ILoggerFactory loggerFactory, ILogger logger)
@@ -30,8 +52,11 @@ namespace EntityFramework.Demo
 				if (!ctx.People.Any())
 					ctx.SeedData();
 
-				logger.LogInformation("[TPH] Customers: {@customers}", ctx.Customers);
-				logger.LogInformation("[TPH] Employees: {@employees}", ctx.Employees);
+				logger.LogInformation(" ==== {caption} ====", nameof(Tph_Queries));
+
+				var demos = new Tph_Queries(ctx, logger);
+				demos.FetchCustomers();
+				demos.FetchEmployees();
 			}
 		}
 
@@ -42,36 +67,12 @@ namespace EntityFramework.Demo
 				if (!ctx.People.Any())
 					ctx.SeedData();
 
-				logger.LogInformation("[TPT] Customers: {@customers}", ctx.Customers);
-				logger.LogInformation("[TPT] Employees: {@employees}", ctx.Employees);
+				logger.LogInformation(" ==== {caption} ====", nameof(Tpt_Queries));
+
+				var demos = new Tpt_Queries(ctx, logger);
+				demos.FetchCustomers();
+				demos.FetchEmployees();
 			}
-		}
-
-		private static void ExecuteDemoDbQueries(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
-		{
-			using (var ctx = GetDemoContext(loggerFactory))
-			{
-				if (!ctx.Products.Any())
-					ctx.SeedData();
-
-				Execute_N_Plus_One_Queries_Demos(ctx, logger);
-			}
-		}
-
-		private static void Execute_N_Plus_One_Queries_Demos(DemoDbContext ctx, ILogger<DemosBase> logger)
-		{
-			logger.LogInformation(" ==== {caption} ====", nameof(N_Plus_One_Queries));
-			var demos = new N_Plus_One_Queries(ctx, logger);
-
-			demos.FetchGroups_Include_Products();
-			demos.FetchGroups_Select_All_Products();
-			demos.FetchGroups_Select_Filtered_Products_without_ToList();
-			demos.FetchGroups_Select_Filtered_Products_with_ToList();
-			demos.FetchGroups_Select_First_Product();
-			demos.FetchProducts_With_ProductGroup();
-
-			demos.FetchGroups_Select_Filtered_Products_via_GroupJoin();
-			demos.FetchGroups_Select_Filtered_Products_via_Lookup();
 		}
 
 		private static ILoggerFactory GetLoggerFactory()
@@ -89,41 +90,36 @@ namespace EntityFramework.Demo
 
 		private static DemoDbContext GetDemoContext(ILoggerFactory loggerFactory)
 		{
-			var builder = new DbContextOptionsBuilder<DemoDbContext>()
-								.UseSqlServer("Server=(local);Database=Demo;Trusted_Connection=True;MultipleActiveResultSets=true")
-								.UseLoggerFactory(loggerFactory);
+			return GetDbContext<DemoDbContext>(loggerFactory, "Demo", o => new DemoDbContext(o));
+		}
 
-			var ctx = new DemoDbContext(builder.Options);
+		public static TphDbContext GetTphContext(ILoggerFactory loggerFactory)
+		{
+			return GetDbContext<TphDbContext>(loggerFactory, "TphDemo", o => new TphDbContext(o));
+		}
 
+		public static TptDbContext GetTptContext(ILoggerFactory loggerFactory)
+		{
+			return GetDbContext<TptDbContext>(loggerFactory, "TptDemo", o => new TptDbContext(o));
+		}
+
+		private static T GetDbContext<T>(ILoggerFactory loggerFactory, string dbName, Func<DbContextOptions<T>, T> ctxFactory)
+			where T : DbContext
+		{
+			var options = GetDbContextOptions<T>(loggerFactory, dbName);
+			var ctx = ctxFactory(options);
 			ctx.Database.EnsureCreated();
 
 			return ctx;
 		}
 
-		private static TphDbContext GetTphContext(ILoggerFactory loggerFactory)
+		private static DbContextOptions<T> GetDbContextOptions<T>(ILoggerFactory loggerFactory, string dbName)
+			where T : DbContext
 		{
-			var builder = new DbContextOptionsBuilder<TphDbContext>()
-								.UseSqlServer("Server=(local);Database=TphDemo;Trusted_Connection=True;MultipleActiveResultSets=true")
-								.UseLoggerFactory(loggerFactory);
-
-			var ctx = new TphDbContext(builder.Options);
-
-			ctx.Database.EnsureCreated();
-
-			return ctx;
-		}
-
-		private static TptDbContext GetTptContext(ILoggerFactory loggerFactory)
-		{
-			var builder = new DbContextOptionsBuilder<TptDbContext>()
-								.UseSqlServer("Server=(local);Database=TptDemo;Trusted_Connection=True;MultipleActiveResultSets=true")
-								.UseLoggerFactory(loggerFactory);
-
-			var ctx = new TptDbContext(builder.Options);
-
-			ctx.Database.EnsureCreated();
-
-			return ctx;
+			return new DbContextOptionsBuilder<T>()
+					.UseSqlServer($"Server=(local);Database={dbName};Trusted_Connection=True;MultipleActiveResultSets=true")
+					.UseLoggerFactory(loggerFactory)
+					.Options;
 		}
 	}
 }

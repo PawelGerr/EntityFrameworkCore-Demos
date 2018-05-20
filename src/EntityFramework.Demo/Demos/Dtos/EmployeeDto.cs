@@ -1,11 +1,12 @@
 ﻿using System;
 
-namespace EntityFramework.Demo.TptDemo
+namespace EntityFramework.Demo.Demos.Dtos
 {
-	public class PersonTpt
+	public class EmployeeDto
 	{
 		public Guid Id { get; set; }
 		public string FirstName { get; set; }
 		public string LastName { get; set; }
+		public decimal Turnover { get; set; }
 	}
 }

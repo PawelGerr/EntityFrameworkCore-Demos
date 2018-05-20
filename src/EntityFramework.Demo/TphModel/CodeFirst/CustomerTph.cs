@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EntityFramework.Demo.TphModel
+namespace EntityFramework.Demo.TphModel.CodeFirst
 {
 	public class CustomerTph : PersonTph
 	{

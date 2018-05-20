@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 
-namespace EntityFramework.Demo.TphModel
+namespace EntityFramework.Demo.TphModel.CodeFirst
 {
 	public class TphDbContext : DbContext
 	{

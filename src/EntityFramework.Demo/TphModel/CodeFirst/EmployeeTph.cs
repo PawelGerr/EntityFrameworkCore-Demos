@@ -1,4 +1,4 @@
-﻿namespace EntityFramework.Demo.TphModel
+﻿namespace EntityFramework.Demo.TphModel.CodeFirst
 {
 	public class EmployeeTph : PersonTph
 	{

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace EntityFramework.Demo.TptDemo
+namespace EntityFramework.Demo.TptModel.CodeFirst
 {
 	public class CustomerTpt
 	{
