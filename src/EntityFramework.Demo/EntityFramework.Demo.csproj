@@ -5,6 +5,7 @@
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Inflector" Version="1.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.1.0-rc1-final" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.1.0-rc1-final" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="2.0.2" />
