@@ -1,0 +1,1 @@
+dotnet ef dbcontext scaffold "Server=(local);Database=TptDemo;Trusted_Connection=True;MultipleActiveResultSets=true" Microsoft.EntityFrameworkCore.SqlServer -c ScaffoldedTptDbContext --context-dir ./TptModel/DatabaseFirst -o ./TptModel/DatabaseFirst -p ./../../EntityFramework.Demo.csproj -s ./../../EntityFramework.Demo.csproj
