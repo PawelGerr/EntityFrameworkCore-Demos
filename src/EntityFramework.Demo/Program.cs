@@ -27,6 +27,8 @@ namespace EntityFramework.Demo
 		{
 			using (var ctx = GetDemoContext(loggerFactory))
 			{
+				ctx.Database.EnsureCreated();
+
 				if (!ctx.Products.Any())
 					ctx.SeedData();
 
@@ -49,6 +51,8 @@ namespace EntityFramework.Demo
 		{
 			using (var ctx = GetTphContext(loggerFactory))
 			{
+				ctx.Database.Migrate();
+
 				if (!ctx.People.Any())
 					ctx.SeedData();
 
@@ -64,6 +68,8 @@ namespace EntityFramework.Demo
 		{
 			using (var ctx = GetTptContext(loggerFactory))
 			{
+				ctx.Database.Migrate();
+
 				if (!ctx.People.Any())
 					ctx.SeedData();
 
@@ -107,10 +113,7 @@ namespace EntityFramework.Demo
 			where T : DbContext
 		{
 			var options = GetDbContextOptions<T>(loggerFactory, dbName);
-			var ctx = ctxFactory(options);
-			ctx.Database.EnsureCreated();
-
-			return ctx;
+			return ctxFactory(options);
 		}
 
 		private static DbContextOptions<T> GetDbContextOptions<T>(ILoggerFactory loggerFactory, string dbName)
