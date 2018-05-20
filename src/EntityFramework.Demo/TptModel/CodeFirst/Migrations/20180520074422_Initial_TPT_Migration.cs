@@ -7,12 +7,13 @@ namespace EntityFramework.Demo.TptModel.CodeFirst.Migrations
 	{
 		protected override void Up(MigrationBuilder migrationBuilder)
 		{
-			migrationBuilder.CreateTable("People", table => new
-																			{
-																				Id = table.Column<Guid>(nullable: false),
-																				FirstName = table.Column<string>(nullable: true),
-																				LastName = table.Column<string>(nullable: true)
-																			},
+			migrationBuilder.CreateTable("People",
+													table => new
+																{
+																	Id = table.Column<Guid>(nullable: false),
+																	FirstName = table.Column<string>(nullable: true),
+																	LastName = table.Column<string>(nullable: true)
+																},
 													constraints: table => table.PrimaryKey("PK_People", x => x.Id));
 
 			migrationBuilder.CreateTable("Customers",

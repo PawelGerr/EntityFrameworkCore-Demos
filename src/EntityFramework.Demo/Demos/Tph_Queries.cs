@@ -29,7 +29,7 @@ namespace EntityFramework.Demo.Demos
 														})
 										.ToList();
 
-			_logger.LogInformation("[TPT] Customers: {@customers}", customers);
+			_logger.LogInformation("[TPH] Customers: {@customers}", customers);
 		}
 
 		public void FetchEmployees()
@@ -44,7 +44,7 @@ namespace EntityFramework.Demo.Demos
 														})
 										.ToList();
 
-			_logger.LogInformation("[TPT] Employees: {@employees}", employees);
+			_logger.LogInformation("[TPH] Employees: {@employees}", employees);
 		}
 	}
 }
