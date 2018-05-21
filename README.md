@@ -2,6 +2,7 @@
 
 ## N+1 Queries Problem
 See the method `ExecuteDemoDbQueries` in `Program.cs`
+
 Blog posts:
 * [Entity Framework Core Performance: Beware of N+1 Queries](http://weblogs.thinktecture.com/pawel/2018/04/entity-framework-core-performance-beware-of-n1-queries.html)
 * [Entity Framework Core 2.1 Performance: Beware of N+1 Queries (Revisited)](http://weblogs.thinktecture.com/pawel/2018/05/entity-framework-core-21-performance-beware-of-n1-queries.html)
