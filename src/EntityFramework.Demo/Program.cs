@@ -5,6 +5,7 @@ using System.Reflection;
 using EntityFramework.Demo.Demos;
 using EntityFramework.Demo.Model;
 using EntityFramework.Demo.TphModel.CodeFirst;
+using EntityFramework.Demo.TphModel.DatabaseFirst;
 using EntityFramework.Demo.TptModel.CodeFirst;
 using EntityFramework.Demo.TptModel.DatabaseFirst;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,7 @@ namespace EntityFramework.Demo
 			ExecuteDemoDbQueries(loggerFactory, logger);
 			ExecuteTphQueries(loggerFactory, logger);
 			ExecuteTptQueries(loggerFactory, logger);
+			ExecuteTphDatabaseFirstQueries(loggerFactory, logger);
 			ExecuteTptDatabaseFirstQueries(loggerFactory, logger);
 
 			// DebugScaffolding();
@@ -106,6 +108,22 @@ namespace EntityFramework.Demo
 			}
 		}
 
+		private static void ExecuteTphDatabaseFirstQueries(ILoggerFactory loggerFactory, ILogger logger)
+		{
+			using (var ctx = GetScaffoldedTphContext(loggerFactory))
+			{
+				var demos = new Tph_DatabseFirst_Queries(ctx, logger);
+
+				if (!ctx.People.Any())
+					demos.SeedData();
+
+				logger.LogInformation(" ==== {caption} ====", nameof(Tph_DatabseFirst_Queries));
+
+				demos.FetchCustomers();
+				demos.FetchEmployees();
+			}
+		}
+
 		private static void DebugScaffolding()
 		{
 			var services = new ServiceCollection()
@@ -160,6 +178,11 @@ namespace EntityFramework.Demo
 		public static TptDbContext GetTptContext(ILoggerFactory loggerFactory)
 		{
 			return GetDbContext<TptDbContext>(loggerFactory, "TptDemo", o => new TptDbContext(o));
+		}
+
+		public static ScaffoldedTphDbContext GetScaffoldedTphContext(ILoggerFactory loggerFactory)
+		{
+			return GetDbContext<ScaffoldedTphDbContext>(loggerFactory, "TphDemo", o => new ScaffoldedTphDbContext(o));
 		}
 
 		public static ScaffoldedTptDbContext GetScaffoldedTptContext(ILoggerFactory loggerFactory)

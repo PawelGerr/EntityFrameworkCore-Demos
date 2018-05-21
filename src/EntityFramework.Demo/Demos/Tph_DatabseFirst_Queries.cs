@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Linq;
 using EntityFramework.Demo.Demos.Dtos;
-using EntityFramework.Demo.TptModel.DatabaseFirst;
+using EntityFramework.Demo.TphModel.DatabaseFirst;
 using Microsoft.Extensions.Logging;
 
 namespace EntityFramework.Demo.Demos
 {
-	public class Tpt_DatabseFirst_Queries
+	public class Tph_DatabseFirst_Queries
 	{
-		private readonly ScaffoldedTptDbContext _ctx;
+		private readonly ScaffoldedTphDbContext _ctx;
 		private readonly ILogger _logger;
 
-		public Tpt_DatabseFirst_Queries(ScaffoldedTptDbContext ctx, ILogger logger)
+		public Tph_DatabseFirst_Queries(ScaffoldedTphDbContext ctx, ILogger logger)
 		{
 			_ctx = ctx ?? throw new ArgumentNullException(nameof(ctx));
 			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -21,25 +21,19 @@ namespace EntityFramework.Demo.Demos
 		{
 			DeleteAll();
 
-			_ctx.Customers.Add(new Customer
+			_ctx.Customers.Add(new CustomerTph
 									{
-										Person = new Person
-													{
-														Id = Guid.NewGuid(),
-														FirstName = "John",
-														LastName = "Foo"
-													},
+										Id = Guid.NewGuid(),
+										FirstName = "John",
+										LastName = "Foo",
 										DateOfBirth = new DateTime(1980, 1, 1)
 									});
 
-			_ctx.Employees.Add(new Employee
+			_ctx.Employees.Add(new EmployeeTph
 									{
-										Person = new Person
-													{
-														Id = Guid.NewGuid(),
-														FirstName = "Max",
-														LastName = "Bar"
-													},
+										Id = Guid.NewGuid(),
+										FirstName = "Max",
+										LastName = "Bar",
 										Turnover = 1000
 									});
 
@@ -61,13 +55,13 @@ namespace EntityFramework.Demo.Demos
 										.Select(c => new CustomerDto
 														{
 															Id = c.Id,
-															FirstName = c.Person.FirstName,
-															LastName = c.Person.LastName,
+															FirstName = c.FirstName,
+															LastName = c.LastName,
 															DateOfBirth = c.DateOfBirth
 														})
 										.ToList();
 
-			_logger.LogInformation("[TPT] Customers: {@customers}", customers);
+			_logger.LogInformation("[TPH] Customers: {@customers}", customers);
 		}
 
 		public void FetchEmployees()
@@ -76,13 +70,13 @@ namespace EntityFramework.Demo.Demos
 										.Select(c => new EmployeeDto
 														{
 															Id = c.Id,
-															FirstName = c.Person.FirstName,
-															LastName = c.Person.LastName,
+															FirstName = c.FirstName,
+															LastName = c.LastName,
 															Turnover = c.Turnover
 														})
 										.ToList();
 
-			_logger.LogInformation("[TPT] Employees: {@employees}", employees);
+			_logger.LogInformation("[TPH] Employees: {@employees}", employees);
 		}
 	}
 }
