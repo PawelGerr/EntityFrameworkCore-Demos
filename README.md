@@ -18,3 +18,9 @@ Blog posts:
 
 ### Table-Per-Type (TPT)
 **Code First**: see the method `ExecuteTptQueries` in `Program.cs` and the file in `/src/EntityFramework.Demo/TptModel/CodeFirst`
+
+## Changing Schema at Runtime
+See the method `ExecuteSchemaChangeQueries` in `Program.cs`
+
+Blog posts:
+* [Entity Framework Core: Changing Database Schema at Runtime](http://weblogs.thinktecture.com/pawel/2018/06/entity-framework-core-changing-database-schema-at-runtime.html )
