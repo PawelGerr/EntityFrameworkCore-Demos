@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using EntityFramework.Demo.Demos;
 using EntityFramework.Demo.Model;
+using EntityFramework.Demo.SchemaChange;
 using EntityFramework.Demo.TphModel.CodeFirst;
 using EntityFramework.Demo.TphModel.DatabaseFirst;
 using EntityFramework.Demo.TptModel.CodeFirst;
@@ -11,6 +12,7 @@ using EntityFramework.Demo.TptModel.DatabaseFirst;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -30,6 +32,7 @@ namespace EntityFramework.Demo
 			ExecuteTptQueries(loggerFactory, logger);
 			ExecuteTphDatabaseFirstQueries(loggerFactory, logger);
 			ExecuteTptDatabaseFirstQueries(loggerFactory, logger);
+			ExecuteSchemaChangeQueries(loggerFactory, logger);
 
 			// DebugScaffolding();
 		}
@@ -124,6 +127,41 @@ namespace EntityFramework.Demo
 			}
 		}
 
+		private static void ExecuteSchemaChangeQueries(ILoggerFactory loggerFactory, ILogger logger)
+		{
+			logger.LogInformation(" ==== {caption} ====", nameof(SchemaChange_Queries));
+
+			using (var ctx = GetSchemaChangeDbContext(loggerFactory))
+			{
+				ctx.Database.EnsureDeleted();
+				ctx.Database.EnsureCreated();
+
+				var demos = new SchemaChange_Queries(ctx, logger);
+				// Executes: SELECT [p].[Id] FROM [Products] AS [p]
+				demos.FetchProducts();
+			}
+
+			using (var ctx = GetSchemaChangeDbContext(loggerFactory, "demo"))
+			{
+				ctx.Database.EnsureDeleted();
+				ctx.Database.EnsureCreated();
+
+				var demos = new SchemaChange_Queries(ctx, logger);
+				// Executes: SELECT [p].[Id] FROM [demo].[Products] AS [p]
+				demos.FetchProducts();
+			}
+
+			using (var ctx = GetSchemaChangeDbContextViaServiceProvider(loggerFactory, "demo2"))
+			{
+				ctx.Database.EnsureDeleted();
+				ctx.Database.EnsureCreated();
+
+				var demos = new SchemaChange_Queries(ctx, logger);
+				// Executes: SELECT [p].[Id] FROM [demo2].[Products] AS [p]
+				demos.FetchProducts();
+			}
+		}
+
 		private static void DebugScaffolding()
 		{
 			var services = new ServiceCollection()
@@ -149,7 +187,6 @@ namespace EntityFramework.Demo
 																 true,
 																 false
 																);
-
 		}
 
 		private static ILoggerFactory GetLoggerFactory()
@@ -190,20 +227,41 @@ namespace EntityFramework.Demo
 			return GetDbContext<ScaffoldedTptDbContext>(loggerFactory, "TptDemo", o => new ScaffoldedTptDbContext(o));
 		}
 
+		public static SchemaChangeDbContext GetSchemaChangeDbContext(ILoggerFactory loggerFactory, string schema = null)
+		{
+			var optionsBuilder = GetDbContextOptionsBuilder<SchemaChangeDbContext>(loggerFactory, "SchemaChangeDemo")
+				.ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>();
+
+			return new SchemaChangeDbContext(optionsBuilder.Options, schema == null ? null : new DbContextSchema(schema));
+		}
+
+		public static SchemaChangeDbContext GetSchemaChangeDbContextViaServiceProvider(ILoggerFactory loggerFactory, string schema = null)
+		{
+			var services = new ServiceCollection()
+				.AddDbContext<SchemaChangeDbContext>(builder => builder.UseSqlServer("Server=(local);Database=SchemaChangeDemo;Trusted_Connection=True;MultipleActiveResultSets=true")
+																										.ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+
+			if (schema != null)
+				services.AddSingleton<IDbContextSchema>(new DbContextSchema(schema));
+
+			var serviceProvider = services.BuildServiceProvider();
+
+			return serviceProvider.GetRequiredService<SchemaChangeDbContext>();
+		}
+
 		private static T GetDbContext<T>(ILoggerFactory loggerFactory, string dbName, Func<DbContextOptions<T>, T> ctxFactory)
 			where T : DbContext
 		{
-			var options = GetDbContextOptions<T>(loggerFactory, dbName);
-			return ctxFactory(options);
+			var optionsBuilder = GetDbContextOptionsBuilder<T>(loggerFactory, dbName);
+			return ctxFactory(optionsBuilder.Options);
 		}
 
-		private static DbContextOptions<T> GetDbContextOptions<T>(ILoggerFactory loggerFactory, string dbName)
+		private static DbContextOptionsBuilder<T> GetDbContextOptionsBuilder<T>(ILoggerFactory loggerFactory, string dbName)
 			where T : DbContext
 		{
 			return new DbContextOptionsBuilder<T>()
 					.UseSqlServer($"Server=(local);Database={dbName};Trusted_Connection=True;MultipleActiveResultSets=true")
-					.UseLoggerFactory(loggerFactory)
-					.Options;
+					.UseLoggerFactory(loggerFactory);
 		}
 	}
 }
