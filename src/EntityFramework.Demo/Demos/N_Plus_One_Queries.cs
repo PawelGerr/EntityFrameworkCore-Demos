@@ -8,7 +8,7 @@ namespace EntityFramework.Demo.Demos
 {
 	public class N_Plus_One_Queries : DemosBase
 	{
-		public N_Plus_One_Queries(DemoDbContext ctx, ILogger<DemosBase> logger)
+		public N_Plus_One_Queries(DemoDbContext ctx, ILogger<N_Plus_One_Queries> logger)
 			: base(ctx, logger)
 		{
 		}

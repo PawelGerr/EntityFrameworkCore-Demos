@@ -10,9 +10,9 @@ namespace EntityFramework.Demo.Demos
 	public abstract class DemosBase
 	{
 		protected DemoDbContext Context { get; }
-		protected ILogger<DemosBase> Logger { get; }
+		protected ILogger Logger { get; }
 
-		public DemosBase(DemoDbContext ctx, ILogger<DemosBase> logger)
+		protected DemosBase(DemoDbContext ctx, ILogger logger)
 		{
 			Context = ctx ?? throw new ArgumentNullException(nameof(ctx));
 			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -34,7 +34,7 @@ namespace EntityFramework.Demo.Demos
 
 			foreach (var item in items)
 			{
-				Logger.LogInformation("{@item}", @item);
+				Logger.LogInformation("{@item}", item);
 			}
 		}
 	}

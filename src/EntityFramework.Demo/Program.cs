@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using EntityFramework.Demo.Demos;
 using EntityFramework.Demo.Model;
 using EntityFramework.Demo.SchemaChange;
@@ -22,22 +23,23 @@ namespace EntityFramework.Demo
 {
 	public class Program
 	{
-		public static void Main()
+		public static async Task Main()
 		{
 			var loggerFactory = GetLoggerFactory();
 			var logger = loggerFactory.CreateLogger<DemosBase>();
 
-			ExecuteDemoDbQueries(loggerFactory, logger);
+			ExecuteDemoDbQueries(loggerFactory, loggerFactory.CreateLogger<N_Plus_One_Queries>());
 			ExecuteTphQueries(loggerFactory, logger);
 			ExecuteTptQueries(loggerFactory, logger);
 			ExecuteTphDatabaseFirstQueries(loggerFactory, logger);
 			ExecuteTptDatabaseFirstQueries(loggerFactory, logger);
 			ExecuteSchemaChangeQueries(loggerFactory, logger);
+			await ExecuteTransactionScopeDemosAsync(loggerFactory, loggerFactory.CreateLogger<TransactionScope_Limitations_Demos>()).ConfigureAwait(false);
 
 			// DebugScaffolding();
 		}
 
-		private static void ExecuteDemoDbQueries(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
+		private static void ExecuteDemoDbQueries(ILoggerFactory loggerFactory, ILogger<N_Plus_One_Queries> logger)
 		{
 			using (var ctx = GetDemoContext(loggerFactory))
 			{
@@ -162,6 +164,61 @@ namespace EntityFramework.Demo
 			}
 		}
 
+		private static async Task ExecuteTransactionScopeDemosAsync(ILoggerFactory loggerFactory, ILogger<TransactionScope_Limitations_Demos> logger)
+		{
+			using (var ctx = GetDemoContext(loggerFactory))
+			using (var anotherCtx = GetDemoContext(loggerFactory))
+			{
+				ctx.Database.EnsureCreated();
+
+				var demos = new TransactionScope_Limitations_Demos(ctx, anotherCtx, logger);
+
+				try
+				{
+					// throws System.InvalidOperationException: An ambient transaction has been detected. The ambient transaction needs to be completed before beginning a transaction on this connection.
+					demos.Try_BeginTransaction_within_TransactionScope();
+				}
+				catch (Exception ex)
+				{
+					logger.LogError(0, ex, "Exception in Try_BeginTransaction_within_TransactionScope()");
+				}
+
+				try
+				{
+					// throws System.PlatformNotSupportedException: This platform does not support distributed transactions.
+					demos.Try_multiple_DatabaseConnections_within_TransactionScope();
+				}
+				catch (Exception ex)
+				{
+					logger.LogError(0, ex, "Exception in Try_multiple_DatabaseConnections_within_TransactionScope()");
+				}
+
+				// no errors
+				await demos.Try_await_within_TransactionScope_with_TransactionScopeAsyncFlowOption().ConfigureAwait(false);
+
+				try
+				{
+					// System.InvalidOperationException: A TransactionScope must be disposed on the same thread that it was created.
+					await demos.Try_await_within_TransactionScope_without_TransactionScopeAsyncFlowOption().ConfigureAwait(false);
+				}
+				catch (Exception ex)
+				{
+					logger.LogError(0, ex, "Exception in Try_await_within_TransactionScope()");
+				}
+
+				try
+				{
+					// throws because of the previous call Try_await_within_TransactionScope_without_TransactionScopeAsyncFlowOption
+					// System.InvalidOperationException: Connection currently has transaction enlisted.  Finish current transaction and retry.
+					await demos.Try_await_within_TransactionScope_with_TransactionScopeAsyncFlowOption().ConfigureAwait(false);
+				}
+				catch (Exception ex)
+				{
+					logger.LogError(0, ex, "Exception in Try_await_within_TransactionScope()");
+				}
+			}
+		}
+
 		private static void DebugScaffolding()
 		{
 			var services = new ServiceCollection()
@@ -239,7 +296,7 @@ namespace EntityFramework.Demo
 		{
 			var services = new ServiceCollection()
 				.AddDbContext<SchemaChangeDbContext>(builder => builder.UseSqlServer("Server=(local);Database=SchemaChangeDemo;Trusted_Connection=True;MultipleActiveResultSets=true")
-																										.ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+																						.ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
 			if (schema != null)
 				services.AddSingleton<IDbContextSchema>(new DbContextSchema(schema));
