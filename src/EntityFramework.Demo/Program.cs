@@ -34,7 +34,7 @@ namespace EntityFramework.Demo
 			ExecuteTphDatabaseFirstQueries(loggerFactory, logger);
 			ExecuteTptDatabaseFirstQueries(loggerFactory, logger);
 			ExecuteSchemaChangeQueries(loggerFactory, logger);
-			await ExecuteTransactionScopeDemosAsync(loggerFactory, loggerFactory.CreateLogger<TransactionScope_Limitations_Demos>()).ConfigureAwait(false);
+			await ExecuteTransactionScopeDemosAsync(loggerFactory, loggerFactory.CreateLogger<TransactionScope_Limitations_Demos>());
 
 			// DebugScaffolding();
 		}
@@ -194,12 +194,12 @@ namespace EntityFramework.Demo
 				}
 
 				// no errors
-				await demos.Try_await_within_TransactionScope_with_TransactionScopeAsyncFlowOption().ConfigureAwait(false);
+				await demos.Try_await_within_TransactionScope_with_TransactionScopeAsyncFlowOption();
 
 				try
 				{
 					// System.InvalidOperationException: A TransactionScope must be disposed on the same thread that it was created.
-					await demos.Try_await_within_TransactionScope_without_TransactionScopeAsyncFlowOption().ConfigureAwait(false);
+					await demos.Try_await_within_TransactionScope_without_TransactionScopeAsyncFlowOption();
 				}
 				catch (Exception ex)
 				{
@@ -210,7 +210,7 @@ namespace EntityFramework.Demo
 				{
 					// throws because of the previous call Try_await_within_TransactionScope_without_TransactionScopeAsyncFlowOption
 					// System.InvalidOperationException: Connection currently has transaction enlisted.  Finish current transaction and retry.
-					await demos.Try_await_within_TransactionScope_with_TransactionScopeAsyncFlowOption().ConfigureAwait(false);
+					await demos.Try_await_within_TransactionScope_with_TransactionScopeAsyncFlowOption();
 				}
 				catch (Exception ex)
 				{

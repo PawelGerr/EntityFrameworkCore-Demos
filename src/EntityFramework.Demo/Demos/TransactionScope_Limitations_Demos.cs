@@ -41,7 +41,7 @@ namespace EntityFramework.Demo.Demos
 		{
 			using (var scope = new TransactionScope())
 			{
-				var groups = await Context.ProductGroups.ToListAsync().ConfigureAwait(false);
+				var groups = await Context.ProductGroups.ToListAsync();
 				Print("Try_await_within_TransactionScope", groups);
 			}
 		}
@@ -50,7 +50,7 @@ namespace EntityFramework.Demo.Demos
 		{
 			using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
 			{
-				var groups = await Context.ProductGroups.ToListAsync().ConfigureAwait(false);
+				var groups = await Context.ProductGroups.ToListAsync();
 				Print("Try_await_within_TransactionScope", groups);
 			}
 		}
