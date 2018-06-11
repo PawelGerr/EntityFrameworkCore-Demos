@@ -35,8 +35,25 @@ namespace EntityFramework.Demo
 			ExecuteTptDatabaseFirstQueries(loggerFactory, logger);
 			ExecuteSchemaChangeQueries(loggerFactory, logger);
 			await ExecuteTransactionScopeDemosAsync(loggerFactory, loggerFactory.CreateLogger<TransactionScope_Limitations_Demos>());
+			ExecuteSelectManyIssues(loggerFactory, logger);
 
 			// DebugScaffolding();
+		}
+
+		private static void ExecuteSelectManyIssues(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
+		{
+			using (var ctx = GetDemoContext(loggerFactory))
+			{
+				ctx.Database.EnsureCreated();
+
+				if (!ctx.Products.Any())
+					ctx.SeedData();
+
+				logger.LogInformation(" ==== {caption} ====", nameof(SelectMany_Issue));
+				var demos = new SelectMany_Issue(ctx, logger);
+
+				demos.SelectMany_Throws();
+			}
 		}
 
 		private static void ExecuteDemoDbQueries(ILoggerFactory loggerFactory, ILogger<N_Plus_One_Queries> logger)
