@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -152,8 +153,7 @@ namespace EntityFramework.Demo
 
 			using (var ctx = GetSchemaChangeDbContext(loggerFactory))
 			{
-				ctx.Database.EnsureDeleted();
-				ctx.Database.EnsureCreated();
+				ctx.Database.Migrate();
 
 				var demos = new SchemaChange_Queries(ctx, logger);
 				// Executes: SELECT [p].[Id] FROM [Products] AS [p]
@@ -162,8 +162,7 @@ namespace EntityFramework.Demo
 
 			using (var ctx = GetSchemaChangeDbContext(loggerFactory, "demo"))
 			{
-				ctx.Database.EnsureDeleted();
-				ctx.Database.EnsureCreated();
+				ctx.Database.Migrate();
 
 				var demos = new SchemaChange_Queries(ctx, logger);
 				// Executes: SELECT [p].[Id] FROM [demo].[Products] AS [p]
@@ -172,8 +171,7 @@ namespace EntityFramework.Demo
 
 			using (var ctx = GetSchemaChangeDbContextViaServiceProvider(loggerFactory, "demo2"))
 			{
-				ctx.Database.EnsureDeleted();
-				ctx.Database.EnsureCreated();
+				ctx.Database.Migrate();
 
 				var demos = new SchemaChange_Queries(ctx, logger);
 				// Executes: SELECT [p].[Id] FROM [demo2].[Products] AS [p]
@@ -303,8 +301,14 @@ namespace EntityFramework.Demo
 
 		public static SchemaChangeDbContext GetSchemaChangeDbContext(ILoggerFactory loggerFactory, string schema = null)
 		{
-			var optionsBuilder = GetDbContextOptionsBuilder<SchemaChangeDbContext>(loggerFactory, "SchemaChangeDemo")
-				.ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>();
+			var optionsBuilder = new DbContextOptionsBuilder<SchemaChangeDbContext>()
+										.UseSqlServer("Server=(local);Database=SchemaChangeDemo;Trusted_Connection=True;MultipleActiveResultSets=true"
+														 // optional
+														 //, b => b.MigrationsHistoryTable("__EFMigrationsHistory", schema)
+														)
+										.UseLoggerFactory(loggerFactory)
+										.ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>()
+										.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>();
 
 			return new SchemaChangeDbContext(optionsBuilder.Options, schema == null ? null : new DbContextSchema(schema));
 		}
@@ -312,8 +316,12 @@ namespace EntityFramework.Demo
 		public static SchemaChangeDbContext GetSchemaChangeDbContextViaServiceProvider(ILoggerFactory loggerFactory, string schema = null)
 		{
 			var services = new ServiceCollection()
-				.AddDbContext<SchemaChangeDbContext>(builder => builder.UseSqlServer("Server=(local);Database=SchemaChangeDemo;Trusted_Connection=True;MultipleActiveResultSets=true")
-																						.ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+				.AddDbContext<SchemaChangeDbContext>(builder => builder.UseSqlServer("Server=(local);Database=SchemaChangeDemo;Trusted_Connection=True;MultipleActiveResultSets=true"
+																											 // optional
+																											 //, b => b.MigrationsHistoryTable("__EFMigrationsHistory", schema)
+																											)
+																						.ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>()
+																						.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>());
 
 			if (schema != null)
 				services.AddSingleton<IDbContextSchema>(new DbContextSchema(schema));
