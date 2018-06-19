@@ -304,7 +304,7 @@ namespace EntityFramework.Demo
 			var optionsBuilder = new DbContextOptionsBuilder<SchemaChangeDbContext>()
 										.UseSqlServer("Server=(local);Database=SchemaChangeDemo;Trusted_Connection=True;MultipleActiveResultSets=true"
 														 // optional
-														 //, b => b.MigrationsHistoryTable("__EFMigrationsHistory", schema)
+														 , b => b.MigrationsHistoryTable("__EFMigrationsHistory", schema)
 														)
 										.UseLoggerFactory(loggerFactory)
 										.ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>()
@@ -318,7 +318,7 @@ namespace EntityFramework.Demo
 			var services = new ServiceCollection()
 				.AddDbContext<SchemaChangeDbContext>(builder => builder.UseSqlServer("Server=(local);Database=SchemaChangeDemo;Trusted_Connection=True;MultipleActiveResultSets=true"
 																											 // optional
-																											 //, b => b.MigrationsHistoryTable("__EFMigrationsHistory", schema)
+																											 , b => b.MigrationsHistoryTable("__EFMigrationsHistory", schema)
 																											)
 																						.ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>()
 																						.ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>());
