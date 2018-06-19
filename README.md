@@ -24,6 +24,7 @@ See the method `ExecuteSchemaChangeQueries` in `Program.cs`
 
 Blog posts:
 * [Entity Framework Core: Changing Database Schema at Runtime](http://weblogs.thinktecture.com/pawel/2018/06/entity-framework-core-changing-database-schema-at-runtime.html )
+* [Entity Framework Core: Changing DB Migration Schema at Runtime](http://weblogs.thinktecture.com/pawel/2018/06/entity-framework-core-changing-db-migration-schema-at-runtime.html)
 
 ## Issues with TransactionScopes
 See the method `ExecuteTransactionScopeDemosAsync` in `Program.cs`
