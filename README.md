@@ -30,3 +30,8 @@ Blog posts:
 See the method `ExecuteTransactionScopeDemosAsync` in `Program.cs`
 
 Blog posts: [Entity Framework Core: Use TransactionScope with Caution!](http://weblogs.thinktecture.com/pawel/2018/06/entity-framework-core-use-transactionscope-with-caution.html)
+
+## Integration Testing
+See code inside folder `IntegrationTests`
+
+Blog posts: [Entity Framework Core: Isolation of Integration Tests](http://weblogs.thinktecture.com/pawel/2018/06/entity-framework-core-isolation-of-integration-tests.html)
