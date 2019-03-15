@@ -37,8 +37,66 @@ namespace EntityFramework.Demo
          ExecuteSchemaChangeQueries(loggerFactory, logger);
          await ExecuteTransactionScopeDemosAsync(loggerFactory, loggerFactory.CreateLogger<TransactionScope_Limitations_Demos>());
          ExecuteSelectManyIssues(loggerFactory, logger);
+         ExecuteRowVersionConversionDemos(loggerFactory, logger);
 
          // DebugScaffolding();
+      }
+
+      private static void ExecuteRowVersionConversionDemos(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
+      {
+         using (var ctx = GetDemoContext(loggerFactory))
+         {
+            ctx.Database.EnsureCreated();
+
+            if (!ctx.Products.Any())
+               ctx.SeedData();
+
+            logger.LogInformation(" ==== {caption} ====", nameof(ExecuteRowVersionConversionDemos));
+
+            try
+            {
+               /*
+                 Generates SQL statement:
+                  SELECT [p].[Id], [p].[GroupId], [p].[Name], [p].[RowVersion], 
+                         [p0].[Id], [p0].[GroupId], [p0].[Name], [p0].[RowVersion]
+                  FROM [Products] AS [p]
+                  LEFT JOIN [Products] AS [p0] ON 0 = 1
+                  
+                 Database returns:
+                  [p].[Id],                            [p].[GroupId],                        [p].[Name], [p].[RowVersion],    [p0].[Id], [p0].[GroupId], [p0].[Name], [p0].[RowVersion]
+                  2BB82E47-9368-49F0-BFF3-0160C8D0C5A8	5DD4AFDE-0D25-498C-B2EA-B5C452F34EB6	Product 34	0x0000000000000830	NULL	      NULL	          NULL	         0x
+                 
+                 0x will be to read by the internal DataReader as empty byte array
+                 
+                 Throw: 
+                  System.IndexOutOfRangeException: Index was outside the bounds of the array.
+                  at Microsoft.EntityFrameworkCore.Storage.ValueConversion.NumberToBytesConverter`1.ReverseLong(Byte[] bytes)
+                  at lambda_method(Closure , DbDataReader )
+                  at Microsoft.EntityFrameworkCore.Storage.Internal.TypedRelationalValueBufferFactory.Create(DbDataReader dataReader)
+                  at Microsoft.EntityFrameworkCore.Query.Internal.QueryingEnumerable`1.Enumerator.BufferlessMoveNext(DbContext _, Boolean buffer)
+                  at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+                  at Microsoft.EntityFrameworkCore.Query.Internal.QueryingEnumerable`1.Enumerator.MoveNext()
+                  at Microsoft.EntityFrameworkCore.Query.Internal.LinqOperatorProvider._TrackEntities[TOut,TIn](IEnumerable`1 results, QueryContext queryContext, IList`1 entityTrackingInfos, IList`1 entityAccessors)+MoveNext()
+                  at Microsoft.EntityFrameworkCore.Query.Internal.LinqOperatorProvider.ExceptionInterceptor`1.EnumeratorExceptionInterceptor.MoveNext()
+                  at System.Collections.Generic.List`1.AddEnumerable(IEnumerable`1 enumerable)
+                  at System.Collections.Generic.List`1..ctor(IEnumerable`1 collection)
+                  at System.Linq.Enumerable.ToList[TSource](IEnumerable`1 source)
+                */
+               var products = ctx.Products
+                                 .GroupJoin(ctx.Products, p => 0, p => 1, (left, right) => new { left, right })
+                                 .SelectMany(g => g.right.DefaultIfEmpty(), (g, right) => new { g.left, right })
+                                 .ToList();
+            }
+            catch (Exception e)
+            {
+               logger.LogError(e, "Error");
+            }
+
+            var productGroups = ctx.ProductGroups
+                                   .GroupJoin(ctx.ProductGroups, p => 0, p => 1, (left, right) => new { left, right })
+                                   .SelectMany(g => g.right.DefaultIfEmpty(), (g, right) => new { g.left, right })
+                                   .ToList();
+         }
       }
 
       private static void ExecuteSelectManyIssues(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)

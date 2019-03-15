@@ -35,3 +35,8 @@ Blog posts: [Entity Framework Core: Use TransactionScope with Caution!](http://w
 See code inside folder `IntegrationTests`
 
 Blog posts: [Entity Framework Core: Isolation of Integration Tests](http://weblogs.thinktecture.com/pawel/2018/06/entity-framework-core-isolation-of-integration-tests.html)
+
+## Issues with RowVersion/Timestamp and NumberToBytesConverter
+See method `ExecuteRowVersionConversionDemos` in `Program.cs`
+
+Doing a LEFT JOIN with entities having a `RowVersion` on the right side may throw if using `NumberToBytesConverter<T>`.

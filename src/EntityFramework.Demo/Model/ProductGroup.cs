@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace EntityFramework.Demo.Model
@@ -7,6 +7,8 @@ namespace EntityFramework.Demo.Model
 	{
 		public Guid Id { get; set; }
 		public string Name { get; set; }
+
+      public ulong RowVersion { get; set; }
 
 		public ICollection<Product> Products { get; set; }
 

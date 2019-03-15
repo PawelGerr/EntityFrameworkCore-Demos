@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace EntityFramework.Demo.Model
 {
@@ -9,6 +9,8 @@ namespace EntityFramework.Demo.Model
 
 		public Guid GroupId { get; set; }
 		public ProductGroup Group { get; set; }
+
+      public ulong RowVersion { get; set; }
 
 		public override string ToString()
 		{

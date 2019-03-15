@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace EntityFramework.Demo.Model
 {
@@ -14,6 +15,24 @@ namespace EntityFramework.Demo.Model
 			: base(options)
 		{
 		}
+
+      /// <inheritdoc />
+      protected override void OnModelCreating(ModelBuilder modelBuilder)
+      {
+         base.OnModelCreating(modelBuilder);
+
+         modelBuilder.Entity<Product>()
+                     .Property(p => p.RowVersion)
+                     .HasColumnType("RowVersion")
+                     .IsRowVersion()
+                     .HasConversion(new NumberToBytesConverter<ulong>());
+
+         modelBuilder.Entity<ProductGroup>()
+                     .Property(p => p.RowVersion)
+                     .HasColumnType("RowVersion")
+                     .IsRowVersion()
+                     .HasConversion(new RowVersionValueConverter());
+      }
 
 		public void SeedData()
 		{
