@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -38,8 +38,32 @@ namespace EntityFramework.Demo
          await ExecuteTransactionScopeDemosAsync(loggerFactory, loggerFactory.CreateLogger<TransactionScope_Limitations_Demos>());
          ExecuteSelectManyIssues(loggerFactory, logger);
          ExecuteRowVersionConversionDemos(loggerFactory, logger);
+         ExecuteImplicitCastToInterfaceDemo(loggerFactory, logger);
 
          // DebugScaffolding();
+      }
+
+      private static void ExecuteImplicitCastToInterfaceDemo(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
+      {
+         using (var ctx = GetDemoContext(loggerFactory))
+         {
+            ctx.Database.EnsureCreated();
+
+            if (!ctx.Products.Any())
+               ctx.SeedData();
+
+            logger.LogInformation(" ==== {caption} ====", nameof(ExecuteImplicitCastToInterfaceDemo));
+
+            try
+            {
+               var demo = new ImplicitCastToInterface_Limitations_Demos(ctx, loggerFactory.CreateLogger<ImplicitCastToInterface_Limitations_Demos>());
+               demo.LoadData();
+            }
+            catch (Exception e)
+            {
+               logger.LogError(e, "Error");
+            }
+         }
       }
 
       private static void ExecuteRowVersionConversionDemos(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
