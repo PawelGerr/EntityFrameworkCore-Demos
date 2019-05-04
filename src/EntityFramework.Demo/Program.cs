@@ -38,12 +38,12 @@ namespace EntityFramework.Demo
          await ExecuteTransactionScopeDemosAsync(loggerFactory, loggerFactory.CreateLogger<TransactionScope_Limitations_Demos>());
          ExecuteSelectManyIssues(loggerFactory, logger);
          ExecuteRowVersionConversionDemos(loggerFactory, logger);
-         ExecuteImplicitCastToInterfaceDemo(loggerFactory, logger);
+         ExecuteBaseTypeMemberAccessLimitationDemo(loggerFactory, logger);
 
          // DebugScaffolding();
       }
 
-      private static void ExecuteImplicitCastToInterfaceDemo(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
+      private static void ExecuteBaseTypeMemberAccessLimitationDemo(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
       {
          using (var ctx = GetDemoContext(loggerFactory))
          {
@@ -52,11 +52,11 @@ namespace EntityFramework.Demo
             if (!ctx.Products.Any())
                ctx.SeedData();
 
-            logger.LogInformation(" ==== {caption} ====", nameof(ExecuteImplicitCastToInterfaceDemo));
+            logger.LogInformation(" ==== {caption} ====", nameof(ExecuteBaseTypeMemberAccessLimitationDemo));
 
             try
             {
-               var demo = new ImplicitCastToInterface_Limitations_Demos(ctx, loggerFactory.CreateLogger<ImplicitCastToInterface_Limitations_Demos>());
+               var demo = new BaseTypeMemberAccess_Limitation_Demos(ctx, loggerFactory.CreateLogger<BaseTypeMemberAccess_Limitation_Demos>());
                demo.LoadData();
             }
             catch (Exception e)

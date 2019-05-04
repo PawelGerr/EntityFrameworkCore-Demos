@@ -4,8 +4,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
 using EntityFramework.Demo.Model;
-using FluentAssertions.Common;
 using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Logging;
 
 namespace EntityFramework.Demo.Demos
@@ -153,16 +153,30 @@ namespace EntityFramework.Demo.Demos
                if (conversion.Type.IsAssignableFrom(conversion.Operand.Type))
                {
                   var memberType = GetMemberReturnType(node.Member);
-                  var member = (MemberInfo)conversion.Operand.Type.FindProperty(node.Member.Name, memberType)
-                               ?? conversion.Operand.Type.FindField(node.Member.Name, memberType)
-                               ?? throw new Exception("Member not found.");
+                  var member = FindProperty(conversion.Operand.Type, node.Member.Name, memberType)
+                               ?? FindField(conversion.Operand.Type, node.Member.Name, memberType)
+                               ?? throw new Exception($"Member with name '{node.Member.Name}' and member type '{memberType.DisplayName()}' not found in {conversion.Operand.Type.DisplayName()}.");
 
-                  return Expression.MakeMemberAccess(conversion.Operand, member);
+                  var operand = Visit(conversion.Operand);
+                  return Expression.MakeMemberAccess(operand, member);
                }
             }
 
             return base.VisitMember(node);
          }
+      }
+
+      [CanBeNull]
+      private static MemberInfo FindProperty([NotNull] Type type, [NotNull] string memberName, Type memberType)
+      {
+         return type.GetProperty(memberName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, memberType, Array.Empty<Type>(), null);
+      }
+
+      [CanBeNull]
+      private static MemberInfo FindField([NotNull] Type type, string memberName, Type memberType)
+      {
+         return type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .FirstOrDefault(fieldInfo => fieldInfo.Name == memberName && fieldInfo.FieldType == memberType);
       }
 
       [NotNull]
