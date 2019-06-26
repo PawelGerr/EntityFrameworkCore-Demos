@@ -39,8 +39,32 @@ namespace EntityFramework.Demo
          ExecuteSelectManyIssues(loggerFactory, logger);
          ExecuteRowVersionConversionDemos(loggerFactory, logger);
          ExecuteBaseTypeMemberAccessLimitationDemo(loggerFactory, logger);
+         await ExecuteGroupByIssuesDemoAsync(loggerFactory, logger);
 
          // DebugScaffolding();
+      }
+
+      private static async Task ExecuteGroupByIssuesDemoAsync(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
+      {
+         using (var ctx = GetDemoContext(loggerFactory))
+         {
+            ctx.Database.EnsureCreated();
+
+            if (!ctx.Products.Any())
+               ctx.SeedData();
+
+            logger.LogInformation(" ==== {caption} ====", nameof(ExecuteGroupByIssuesDemoAsync));
+
+            try
+            {
+               var demo = new GroupBy_Issues_Demos(ctx, loggerFactory.CreateLogger<GroupBy_Issues_Demos>());
+               await demo.GroupBy_ToList_ToListAsync_throws();
+            }
+            catch (Exception e)
+            {
+               logger.LogError(e, "Error");
+            }
+         }
       }
 
       private static void ExecuteBaseTypeMemberAccessLimitationDemo(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
