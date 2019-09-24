@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Data.Common;
-using System.Data.SqlClient;
 using System.Threading.Tasks;
 using EntityFramework.Demo.SchemaChange;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace EntityFramework.Demo.IntegrationTests
