@@ -29,6 +29,7 @@ namespace EntityFramework.Demo
          var loggerFactory = GetLoggerFactory();
          var logger = loggerFactory.CreateLogger<DemosBase>();
 
+         MethodTranslatorDemo(loggerFactory);
          ExecuteDemoDbQueries(loggerFactory, loggerFactory.CreateLogger<N_Plus_One_Queries>());
          ExecuteTphQueries(loggerFactory, logger);
          ExecuteTptQueries(loggerFactory, logger);
@@ -42,6 +43,26 @@ namespace EntityFramework.Demo
          await ExecuteGroupByIssuesDemoAsync(loggerFactory, logger);
 
          // DebugScaffolding();
+      }
+
+      private static void MethodTranslatorDemo(ILoggerFactory loggerFactory)
+      {
+         var logger = loggerFactory.CreateLogger<MethodTranslatorDemo>();
+
+         using (var ctx = GetDemoContext(loggerFactory))
+         {
+            ctx.Database.EnsureCreated();
+
+            if (!ctx.Products.Any())
+               ctx.SeedData();
+
+            logger.LogInformation(" ==== {caption} ====", nameof(MethodTranslatorDemo));
+
+            var demo = new MethodTranslatorDemo(ctx, loggerFactory.CreateLogger<MethodTranslatorDemo>());
+            demo.MethodCallWithOneColumnIsTranslated();
+            demo.MethodCallWithNewExpressionThrows();
+            demo.MethodCallWithArrayThrows();
+         }
       }
 
       private static async Task ExecuteGroupByIssuesDemoAsync(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
@@ -105,18 +126,18 @@ namespace EntityFramework.Demo
             {
                /*
                  Generates SQL statement:
-                  SELECT [p].[Id], [p].[GroupId], [p].[Name], [p].[RowVersion], 
+                  SELECT [p].[Id], [p].[GroupId], [p].[Name], [p].[RowVersion],
                          [p0].[Id], [p0].[GroupId], [p0].[Name], [p0].[RowVersion]
                   FROM [Products] AS [p]
                   LEFT JOIN [Products] AS [p0] ON 0 = 1
-                  
+
                  Database returns:
                   [p].[Id],                            [p].[GroupId],                        [p].[Name], [p].[RowVersion],    [p0].[Id], [p0].[GroupId], [p0].[Name], [p0].[RowVersion]
                   2BB82E47-9368-49F0-BFF3-0160C8D0C5A8	5DD4AFDE-0D25-498C-B2EA-B5C452F34EB6	Product 34	0x0000000000000830	NULL	      NULL	          NULL	         0x
-                 
+
                  0x will be to read by the internal DataReader as empty byte array
-                 
-                 Throw: 
+
+                 Throw:
                   System.IndexOutOfRangeException: Index was outside the bounds of the array.
                   at Microsoft.EntityFrameworkCore.Storage.ValueConversion.NumberToBytesConverter`1.ReverseLong(Byte[] bytes)
                   at lambda_method(Closure , DbDataReader )
@@ -447,9 +468,17 @@ namespace EntityFramework.Demo
       private static DbContextOptionsBuilder<T> GetDbContextOptionsBuilder<T>(ILoggerFactory loggerFactory, string dbName)
          where T : DbContext
       {
-         return new DbContextOptionsBuilder<T>()
-                .UseSqlServer($"Server=(local);Database={dbName};Trusted_Connection=True;MultipleActiveResultSets=true")
-                .UseLoggerFactory(loggerFactory);
+         var builder = new DbContextOptionsBuilder<T>()
+                       .UseSqlServer($"Server=(local);Database={dbName};Trusted_Connection=True;MultipleActiveResultSets=true")
+                       .UseLoggerFactory(loggerFactory);
+
+         if (typeof(T) == typeof(DemoDbContext))
+         {
+            var extension = builder.Options.FindExtension<DemoDbContextOptionsExtension>() ?? new DemoDbContextOptionsExtension();
+            ((IDbContextOptionsBuilderInfrastructure)builder).AddOrUpdateExtension(extension);
+         }
+
+         return builder;
       }
    }
 }
