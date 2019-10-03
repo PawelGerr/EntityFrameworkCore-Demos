@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace EntityFramework.Demo.Model
 {
@@ -12,9 +15,30 @@ namespace EntityFramework.Demo.Model
 
       public ulong RowVersion { get; set; }
 
+      public List<ProductTranslation> Translations { get; set; }
+
 		public override string ToString()
-		{
-			return Name;
+      {
+         var sb = new StringBuilder();
+         sb.Append("{ Name = ").Append(Name);
+
+         if (Translations?.Any() == true)
+         {
+            sb.Append(", Translations = { ");
+
+            for (var index = 0; index < Translations.Count; index++)
+            {
+               if (index != 0)
+                  sb.Append(", ");
+
+               sb.Append(Translations[index]);
+            }
+
+            sb.Append(" }");
+         }
+
+         sb.Append(" }");
+			return sb.ToString();
 		}
 	}
 }

@@ -29,6 +29,7 @@ namespace EntityFramework.Demo
          var loggerFactory = GetLoggerFactory();
          var logger = loggerFactory.CreateLogger<DemosBase>();
 
+         GlobalFiltersDemo(loggerFactory);
          MethodTranslatorDemo(loggerFactory);
          ExecuteDemoDbQueries(loggerFactory, loggerFactory.CreateLogger<N_Plus_One_Queries>());
          ExecuteTphQueries(loggerFactory, logger);
@@ -45,6 +46,25 @@ namespace EntityFramework.Demo
          // DebugScaffolding();
       }
 
+      private static void GlobalFiltersDemo(ILoggerFactory loggerFactory)
+      {
+         var logger = loggerFactory.CreateLogger<GlobalFiltersDemo>();
+
+         using (var ctx = GetDemoContext(loggerFactory))
+         {
+            ctx.Database.EnsureCreated();
+
+            if (!ctx.Products.Any())
+               ctx.SeedData();
+
+            logger.LogInformation(" ==== {caption} ====", nameof(GlobalFiltersDemo));
+
+            var demo = new GlobalFiltersDemo(ctx, logger);
+            demo.LoadTranslationsWithoutFilter();
+            demo.LoadTranslationsWithLocaleFilter("en");
+         }
+      }
+
       private static void MethodTranslatorDemo(ILoggerFactory loggerFactory)
       {
          var logger = loggerFactory.CreateLogger<MethodTranslatorDemo>();
@@ -58,7 +78,7 @@ namespace EntityFramework.Demo
 
             logger.LogInformation(" ==== {caption} ====", nameof(MethodTranslatorDemo));
 
-            var demo = new MethodTranslatorDemo(ctx, loggerFactory.CreateLogger<MethodTranslatorDemo>());
+            var demo = new MethodTranslatorDemo(ctx, logger);
             demo.MethodCallWithOneColumnIsTranslated();
             demo.MethodCallWithNewExpressionThrows();
             demo.MethodCallWithArrayThrows();
@@ -470,7 +490,8 @@ namespace EntityFramework.Demo
       {
          var builder = new DbContextOptionsBuilder<T>()
                        .UseSqlServer($"Server=(local);Database={dbName};Trusted_Connection=True;MultipleActiveResultSets=true")
-                       .UseLoggerFactory(loggerFactory);
+                       .UseLoggerFactory(loggerFactory)
+                       .EnableSensitiveDataLogging();
 
          if (typeof(T) == typeof(DemoDbContext))
          {

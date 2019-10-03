@@ -1,20 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace EntityFramework.Demo.Model
 {
-	public class DemoDbContext : DbContext
-	{
-		public DbSet<Product> Products { get; set; }
-		public DbSet<ProductGroup> ProductGroups { get; set; }
+   public class DemoDbContext : DbContext
+   {
+      public DbSet<Product> Products { get; set; }
+      public DbSet<ProductGroup> ProductGroups { get; set; }
 
-		public DemoDbContext(DbContextOptions<DemoDbContext> options)
-			: base(options)
-		{
-		}
+      private string _localeFilter;
+
+      public DemoDbContext(DbContextOptions<DemoDbContext> options)
+         : base(options)
+      {
+      }
 
       /// <inheritdoc />
       protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -27,6 +30,12 @@ namespace EntityFramework.Demo.Model
                      .IsRowVersion()
                      .HasConversion(new NumberToBytesConverter<ulong>());
 
+         var translationBuilder = modelBuilder.Entity<ProductTranslation>();
+         translationBuilder.Property(t => t.Locale).IsRequired().HasMaxLength(10);
+         translationBuilder.Property(t => t.Description).IsRequired().HasMaxLength(200);
+         translationBuilder.HasKey(t => new { t.ProductId, t.Locale });
+         translationBuilder.HasQueryFilter(t => _localeFilter == null || t.Locale == _localeFilter);
+
          modelBuilder.Entity<ProductGroup>()
                      .Property(p => p.RowVersion)
                      .HasColumnType("RowVersion")
@@ -34,55 +43,100 @@ namespace EntityFramework.Demo.Model
                      .HasConversion(new RowVersionValueConverter());
       }
 
-		public void SeedData()
-		{
-			DeleteAll();
+      [NotNull]
+      public IDisposable SetTranslationFilter([NotNull] string locale)
+      {
+         if (locale == null)
+            throw new ArgumentNullException(nameof(locale));
+         if (_localeFilter != null)
+            throw new InvalidOperationException($"Changing a filter is not allowed. Current filter: {_localeFilter}. Provided filter: {locale}");
 
-			var productGroups = SeedProductGroups(5);
-			SeedProducts(100, productGroups);
+         _localeFilter = locale;
 
-			SaveChanges();
-		}
+         return new FilterReset(this);
+      }
 
-		private void SeedProducts(int numberOfProducts, List<ProductGroup> productGroups)
-		{
-			for (int i = 0; i < numberOfProducts; i++)
-			{
-				var product = new Product()
-				{
-					Id = Guid.NewGuid(),
-					Name = $"Product {i}",
-					Group = productGroups[i % productGroups.Count]
-				};
+      public void SeedData()
+      {
+         DeleteAll();
 
-				Products.Add(product);
-			}
-		}
+         var productGroups = SeedProductGroups(5);
+         SeedProducts(100, productGroups);
 
-		private List<ProductGroup> SeedProductGroups(int numberOfProducts)
-		{
-			for (int i = 0; i < numberOfProducts; i++)
-			{
-				var productGroup = new ProductGroup()
-				{
-					Id = Guid.NewGuid(),
-					Name = $"Product Group {i}"
-				};
+         SaveChanges();
+      }
 
-				ProductGroups.Add(productGroup);
-			}
+      private void SeedProducts(int numberOfProducts, List<ProductGroup> productGroups)
+      {
+         for (int i = 0; i < numberOfProducts; i++)
+         {
+            var id = Guid.NewGuid();
+            var name = $"Product {i}";
+            var product = new Product
+                          {
+                             Id = id,
+                             Name = name,
+                             Group = productGroups[i % productGroups.Count],
+                             Translations = new List<ProductTranslation>
+                                            {
+                                               new ProductTranslation
+                                               {
+                                                  ProductId = id,
+                                                  Locale = "en",
+                                                  Description = $"Description of the product '{name}'."
+                                               },
+                                               new ProductTranslation
+                                               {
+                                                  ProductId = id,
+                                                  Locale = "de",
+                                                  Description = $"Produktbeschreibung von '{name}'."
+                                               }
+                                            }
+                          };
 
-			SaveChanges();
+            Products.Add(product);
+         }
+      }
 
-			return ProductGroups.ToList();
-		}
+      private List<ProductGroup> SeedProductGroups(int numberOfProducts)
+      {
+         for (int i = 0; i < numberOfProducts; i++)
+         {
+            var productGroup = new ProductGroup()
+                               {
+                                  Id = Guid.NewGuid(),
+                                  Name = $"Product Group {i}"
+                               };
 
-		private void DeleteAll()
-		{
-			Products.RemoveRange(Products);
-			ProductGroups.RemoveRange(ProductGroups);
+            ProductGroups.Add(productGroup);
+         }
 
-			SaveChanges();
-		}
-	}
+         SaveChanges();
+
+         return ProductGroups.ToList();
+      }
+
+      private void DeleteAll()
+      {
+         Products.RemoveRange(Products);
+         ProductGroups.RemoveRange(ProductGroups);
+
+         SaveChanges();
+      }
+
+      private readonly struct FilterReset : IDisposable
+      {
+         private readonly DemoDbContext _ctx;
+
+         public FilterReset([NotNull] DemoDbContext ctx)
+         {
+            _ctx = ctx ?? throw new ArgumentNullException(nameof(ctx));
+         }
+
+         public void Dispose()
+         {
+            _ctx._localeFilter = null;
+         }
+      }
+   }
 }
