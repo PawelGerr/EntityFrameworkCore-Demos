@@ -20,6 +20,12 @@ namespace EntityFramework.Demo.Demos
 
       public void MethodCallWithOneColumnIsTranslated()
       {
+         /**
+          * Generated query:
+          *
+          * SELECT 42 AS [Foo]
+          * FROM [Products] AS [p]
+          */
          var result = _ctx.Products
                           .Select(p => new
                                        {

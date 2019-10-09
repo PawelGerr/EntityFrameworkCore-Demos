@@ -38,8 +38,6 @@ namespace EntityFramework.Demo
          ExecuteTptDatabaseFirstQueries(loggerFactory, logger);
          ExecuteSchemaChangeQueries(loggerFactory, logger);
          await ExecuteTransactionScopeDemosAsync(loggerFactory, loggerFactory.CreateLogger<TransactionScope_Limitations_Demos>());
-         ExecuteSelectManyIssues(loggerFactory, logger);
-         ExecuteRowVersionConversionDemos(loggerFactory, logger);
          ExecuteBaseTypeMemberAccessLimitationDemo(loggerFactory, logger);
          await ExecuteGroupByIssuesDemoAsync(loggerFactory, logger);
 
@@ -50,248 +48,166 @@ namespace EntityFramework.Demo
       {
          var logger = loggerFactory.CreateLogger<GlobalFiltersDemo>();
 
-         using (var ctx = GetDemoContext(loggerFactory))
-         {
-            ctx.Database.EnsureCreated();
+         using var ctx = GetDemoContext(loggerFactory);
 
-            if (!ctx.Products.Any())
-               ctx.SeedData();
+         ctx.Database.EnsureCreated();
 
-            logger.LogInformation(" ==== {caption} ====", nameof(GlobalFiltersDemo));
+         if (!ctx.Products.Any())
+            ctx.SeedData();
 
-            var demo = new GlobalFiltersDemo(ctx, logger);
-            demo.LoadTranslationsWithoutFilter();
-            demo.LoadTranslationsWithLocaleFilter("en");
-         }
+         logger.LogInformation(" ==== {caption} ====", nameof(GlobalFiltersDemo));
+
+         var demo = new GlobalFiltersDemo(ctx, logger);
+         demo.LoadTranslationsWithoutFilter();
+         demo.LoadTranslationsWithLocaleFilter("en");
       }
 
       private static void MethodTranslatorDemo(ILoggerFactory loggerFactory)
       {
          var logger = loggerFactory.CreateLogger<MethodTranslatorDemo>();
 
-         using (var ctx = GetDemoContext(loggerFactory))
-         {
-            ctx.Database.EnsureCreated();
+         using var ctx = GetDemoContext(loggerFactory);
 
-            if (!ctx.Products.Any())
-               ctx.SeedData();
+         ctx.Database.EnsureCreated();
 
-            logger.LogInformation(" ==== {caption} ====", nameof(MethodTranslatorDemo));
+         if (!ctx.Products.Any())
+            ctx.SeedData();
 
-            var demo = new MethodTranslatorDemo(ctx, logger);
-            demo.MethodCallWithOneColumnIsTranslated();
-            demo.MethodCallWithNewExpressionThrows();
-            demo.MethodCallWithArrayThrows();
-         }
+         logger.LogInformation(" ==== {caption} ====", nameof(MethodTranslatorDemo));
+
+         var demo = new MethodTranslatorDemo(ctx, logger);
+         demo.MethodCallWithOneColumnIsTranslated();
+         demo.MethodCallWithNewExpressionThrows();
+         demo.MethodCallWithArrayThrows();
       }
 
       private static async Task ExecuteGroupByIssuesDemoAsync(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
       {
-         using (var ctx = GetDemoContext(loggerFactory))
+         await using var ctx = GetDemoContext(loggerFactory);
+
+         ctx.Database.EnsureCreated();
+
+         if (!ctx.Products.Any())
+            ctx.SeedData();
+
+         logger.LogInformation(" ==== {caption} ====", nameof(ExecuteGroupByIssuesDemoAsync));
+
+         try
          {
-            ctx.Database.EnsureCreated();
-
-            if (!ctx.Products.Any())
-               ctx.SeedData();
-
-            logger.LogInformation(" ==== {caption} ====", nameof(ExecuteGroupByIssuesDemoAsync));
-
-            try
-            {
-               var demo = new GroupBy_Issues_Demos(ctx, loggerFactory.CreateLogger<GroupBy_Issues_Demos>());
-               await demo.GroupBy_ToList_ToListAsync_throws();
-            }
-            catch (Exception e)
-            {
-               logger.LogError(e, "Error");
-            }
+            var demo = new GroupBy_Issues_Demos(ctx, loggerFactory.CreateLogger<GroupBy_Issues_Demos>());
+            await demo.GroupBy_ToList_ToListAsync_throws();
+         }
+         catch (Exception e)
+         {
+            logger.LogError(e, "Error");
          }
       }
 
       private static void ExecuteBaseTypeMemberAccessLimitationDemo(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
       {
-         using (var ctx = GetDemoContext(loggerFactory))
+         using var ctx = GetDemoContext(loggerFactory);
+
+         ctx.Database.EnsureCreated();
+
+         if (!ctx.Products.Any())
+            ctx.SeedData();
+
+         logger.LogInformation(" ==== {caption} ====", nameof(ExecuteBaseTypeMemberAccessLimitationDemo));
+
+         try
          {
-            ctx.Database.EnsureCreated();
-
-            if (!ctx.Products.Any())
-               ctx.SeedData();
-
-            logger.LogInformation(" ==== {caption} ====", nameof(ExecuteBaseTypeMemberAccessLimitationDemo));
-
-            try
-            {
-               var demo = new BaseTypeMemberAccess_Limitation_Demos(ctx, loggerFactory.CreateLogger<BaseTypeMemberAccess_Limitation_Demos>());
-               demo.LoadData();
-            }
-            catch (Exception e)
-            {
-               logger.LogError(e, "Error");
-            }
+            var demo = new BaseTypeMemberAccess_Limitation_Demos(ctx, loggerFactory.CreateLogger<BaseTypeMemberAccess_Limitation_Demos>());
+            demo.LoadData();
          }
-      }
-
-      private static void ExecuteRowVersionConversionDemos(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
-      {
-         using (var ctx = GetDemoContext(loggerFactory))
+         catch (Exception e)
          {
-            ctx.Database.EnsureCreated();
-
-            if (!ctx.Products.Any())
-               ctx.SeedData();
-
-            logger.LogInformation(" ==== {caption} ====", nameof(ExecuteRowVersionConversionDemos));
-
-            try
-            {
-               /*
-                 Generates SQL statement:
-                  SELECT [p].[Id], [p].[GroupId], [p].[Name], [p].[RowVersion],
-                         [p0].[Id], [p0].[GroupId], [p0].[Name], [p0].[RowVersion]
-                  FROM [Products] AS [p]
-                  LEFT JOIN [Products] AS [p0] ON 0 = 1
-
-                 Database returns:
-                  [p].[Id],                            [p].[GroupId],                        [p].[Name], [p].[RowVersion],    [p0].[Id], [p0].[GroupId], [p0].[Name], [p0].[RowVersion]
-                  2BB82E47-9368-49F0-BFF3-0160C8D0C5A8	5DD4AFDE-0D25-498C-B2EA-B5C452F34EB6	Product 34	0x0000000000000830	NULL	      NULL	          NULL	         0x
-
-                 0x will be to read by the internal DataReader as empty byte array
-
-                 Throw:
-                  System.IndexOutOfRangeException: Index was outside the bounds of the array.
-                  at Microsoft.EntityFrameworkCore.Storage.ValueConversion.NumberToBytesConverter`1.ReverseLong(Byte[] bytes)
-                  at lambda_method(Closure , DbDataReader )
-                  at Microsoft.EntityFrameworkCore.Storage.Internal.TypedRelationalValueBufferFactory.Create(DbDataReader dataReader)
-                  at Microsoft.EntityFrameworkCore.Query.Internal.QueryingEnumerable`1.Enumerator.BufferlessMoveNext(DbContext _, Boolean buffer)
-                  at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
-                  at Microsoft.EntityFrameworkCore.Query.Internal.QueryingEnumerable`1.Enumerator.MoveNext()
-                  at Microsoft.EntityFrameworkCore.Query.Internal.LinqOperatorProvider._TrackEntities[TOut,TIn](IEnumerable`1 results, QueryContext queryContext, IList`1 entityTrackingInfos, IList`1 entityAccessors)+MoveNext()
-                  at Microsoft.EntityFrameworkCore.Query.Internal.LinqOperatorProvider.ExceptionInterceptor`1.EnumeratorExceptionInterceptor.MoveNext()
-                  at System.Collections.Generic.List`1.AddEnumerable(IEnumerable`1 enumerable)
-                  at System.Collections.Generic.List`1..ctor(IEnumerable`1 collection)
-                  at System.Linq.Enumerable.ToList[TSource](IEnumerable`1 source)
-                */
-               var products = ctx.Products
-                                 .GroupJoin(ctx.Products, p => 0, p => 1, (left, right) => new { left, right })
-                                 .SelectMany(g => g.right.DefaultIfEmpty(), (g, right) => new { g.left, right })
-                                 .ToList();
-            }
-            catch (Exception e)
-            {
-               logger.LogError(e, "Error");
-            }
-
-            var productGroups = ctx.ProductGroups
-                                   .GroupJoin(ctx.ProductGroups, p => 0, p => 1, (left, right) => new { left, right })
-                                   .SelectMany(g => g.right.DefaultIfEmpty(), (g, right) => new { g.left, right })
-                                   .ToList();
-         }
-      }
-
-      private static void ExecuteSelectManyIssues(ILoggerFactory loggerFactory, ILogger<DemosBase> logger)
-      {
-         using (var ctx = GetDemoContext(loggerFactory))
-         {
-            ctx.Database.EnsureCreated();
-
-            if (!ctx.Products.Any())
-               ctx.SeedData();
-
-            logger.LogInformation(" ==== {caption} ====", nameof(SelectMany_Issue));
-            var demos = new SelectMany_Issue(ctx, logger);
-
-            demos.SelectMany_Throws();
+            logger.LogError(e, "Error");
          }
       }
 
       private static void ExecuteDemoDbQueries(ILoggerFactory loggerFactory, ILogger<N_Plus_One_Queries> logger)
       {
-         using (var ctx = GetDemoContext(loggerFactory))
-         {
-            ctx.Database.EnsureCreated();
+         using var ctx = GetDemoContext(loggerFactory);
 
-            if (!ctx.Products.Any())
-               ctx.SeedData();
+         ctx.Database.EnsureCreated();
 
-            logger.LogInformation(" ==== {caption} ====", nameof(N_Plus_One_Queries));
-            var demos = new N_Plus_One_Queries(ctx, logger);
+         if (!ctx.Products.Any())
+            ctx.SeedData();
 
-            demos.FetchGroups_Include_Products();
-            demos.FetchGroups_Select_All_Products();
-            demos.FetchGroups_Select_Filtered_Products_without_ToList();
-            demos.FetchGroups_Select_Filtered_Products_with_ToList();
-            demos.FetchGroups_Select_First_Product();
-            demos.FetchProducts_With_ProductGroup();
+         logger.LogInformation(" ==== {caption} ====", nameof(N_Plus_One_Queries));
+         var demos = new N_Plus_One_Queries(ctx, logger);
 
-            demos.FetchGroups_Select_Filtered_Products_via_GroupJoin();
-            demos.FetchGroups_Select_Filtered_Products_via_Lookup();
-         }
+         demos.FetchGroups_Include_Products();
+         demos.FetchGroups_Select_All_Products();
+         demos.FetchGroups_Select_Filtered_Products_without_ToList();
+         demos.FetchGroups_Select_Filtered_Products_with_ToList();
+         demos.FetchGroups_Select_First_Product();
+         demos.FetchProducts_With_ProductGroup();
+
+         demos.FetchGroups_Select_Filtered_Products_via_GroupJoin_Throws();
+         demos.FetchGroups_Select_Filtered_Products_via_Lookup();
       }
 
       private static void ExecuteTphQueries(ILoggerFactory loggerFactory, ILogger logger)
       {
-         using (var ctx = GetTphContext(loggerFactory))
-         {
-            ctx.Database.Migrate();
+         using var ctx = GetTphContext(loggerFactory);
 
-            if (!ctx.People.Any())
-               ctx.SeedData();
+         ctx.Database.Migrate();
 
-            logger.LogInformation(" ==== {caption} ====", nameof(Tph_Queries));
+         if (!ctx.People.Any())
+            ctx.SeedData();
 
-            var demos = new Tph_Queries(ctx, logger);
-            demos.FetchCustomers();
-            demos.FetchEmployees();
-         }
+         logger.LogInformation(" ==== {caption} ====", nameof(Tph_Queries));
+
+         var demos = new Tph_Queries(ctx, logger);
+         demos.FetchCustomers();
+         demos.FetchEmployees();
       }
 
       private static void ExecuteTptQueries(ILoggerFactory loggerFactory, ILogger logger)
       {
-         using (var ctx = GetTptContext(loggerFactory))
-         {
-            ctx.Database.Migrate();
+         using var ctx = GetTptContext(loggerFactory);
 
-            if (!ctx.People.Any())
-               ctx.SeedData();
+         ctx.Database.Migrate();
 
-            logger.LogInformation(" ==== {caption} ====", nameof(Tpt_Queries));
+         if (!ctx.People.Any())
+            ctx.SeedData();
 
-            var demos = new Tpt_Queries(ctx, logger);
-            demos.FetchCustomers();
-            demos.FetchEmployees();
-         }
+         logger.LogInformation(" ==== {caption} ====", nameof(Tpt_Queries));
+
+         var demos = new Tpt_Queries(ctx, logger);
+         demos.FetchCustomers();
+         demos.FetchEmployees();
       }
 
       private static void ExecuteTptDatabaseFirstQueries(ILoggerFactory loggerFactory, ILogger logger)
       {
-         using (var ctx = GetScaffoldedTptContext(loggerFactory))
-         {
-            var demos = new Tpt_DatabseFirst_Queries(ctx, logger);
+         using var ctx = GetScaffoldedTptContext(loggerFactory);
 
-            if (!ctx.People.Any())
-               demos.SeedData();
+         var demos = new Tpt_DatabseFirst_Queries(ctx, logger);
 
-            logger.LogInformation(" ==== {caption} ====", nameof(Tpt_DatabseFirst_Queries));
+         if (!ctx.People.Any())
+            demos.SeedData();
 
-            demos.FetchCustomers();
-            demos.FetchEmployees();
-         }
+         logger.LogInformation(" ==== {caption} ====", nameof(Tpt_DatabseFirst_Queries));
+
+         demos.FetchCustomers();
+         demos.FetchEmployees();
       }
 
       private static void ExecuteTphDatabaseFirstQueries(ILoggerFactory loggerFactory, ILogger logger)
       {
-         using (var ctx = GetScaffoldedTphContext(loggerFactory))
-         {
-            var demos = new Tph_DatabseFirst_Queries(ctx, logger);
+         using var ctx = GetScaffoldedTphContext(loggerFactory);
 
-            if (!ctx.People.Any())
-               demos.SeedData();
+         var demos = new Tph_DatabseFirst_Queries(ctx, logger);
 
-            logger.LogInformation(" ==== {caption} ====", nameof(Tph_DatabseFirst_Queries));
+         if (!ctx.People.Any())
+            demos.SeedData();
 
-            demos.FetchCustomers();
-            demos.FetchEmployees();
-         }
+         logger.LogInformation(" ==== {caption} ====", nameof(Tph_DatabseFirst_Queries));
+
+         demos.FetchCustomers();
+         demos.FetchEmployees();
       }
 
       private static void ExecuteSchemaChangeQueries(ILoggerFactory loggerFactory, ILogger logger)
@@ -328,56 +244,55 @@ namespace EntityFramework.Demo
 
       private static async Task ExecuteTransactionScopeDemosAsync(ILoggerFactory loggerFactory, ILogger<TransactionScope_Limitations_Demos> logger)
       {
-         using (var ctx = GetDemoContext(loggerFactory))
-         using (var anotherCtx = GetDemoContext(loggerFactory))
+         await using var ctx = GetDemoContext(loggerFactory);
+         await using var anotherCtx = GetDemoContext(loggerFactory);
+
+         ctx.Database.EnsureCreated();
+
+         var demos = new TransactionScope_Limitations_Demos(ctx, anotherCtx, logger);
+
+         try
          {
-            ctx.Database.EnsureCreated();
+            // throws System.InvalidOperationException: An ambient transaction has been detected. The ambient transaction needs to be completed before beginning a transaction on this connection.
+            demos.Try_BeginTransaction_within_TransactionScope();
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(0, ex, "Exception in Try_BeginTransaction_within_TransactionScope()");
+         }
 
-            var demos = new TransactionScope_Limitations_Demos(ctx, anotherCtx, logger);
+         try
+         {
+            // throws System.PlatformNotSupportedException: This platform does not support distributed transactions.
+            demos.Try_multiple_DatabaseConnections_within_TransactionScope();
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(0, ex, "Exception in Try_multiple_DatabaseConnections_within_TransactionScope()");
+         }
 
-            try
-            {
-               // throws System.InvalidOperationException: An ambient transaction has been detected. The ambient transaction needs to be completed before beginning a transaction on this connection.
-               demos.Try_BeginTransaction_within_TransactionScope();
-            }
-            catch (Exception ex)
-            {
-               logger.LogError(0, ex, "Exception in Try_BeginTransaction_within_TransactionScope()");
-            }
+         // no errors
+         await demos.Try_await_within_TransactionScope_with_TransactionScopeAsyncFlowOption();
 
-            try
-            {
-               // throws System.PlatformNotSupportedException: This platform does not support distributed transactions.
-               demos.Try_multiple_DatabaseConnections_within_TransactionScope();
-            }
-            catch (Exception ex)
-            {
-               logger.LogError(0, ex, "Exception in Try_multiple_DatabaseConnections_within_TransactionScope()");
-            }
+         try
+         {
+            // System.InvalidOperationException: A TransactionScope must be disposed on the same thread that it was created.
+            await demos.Try_await_within_TransactionScope_without_TransactionScopeAsyncFlowOption();
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(0, ex, "Exception in Try_await_within_TransactionScope()");
+         }
 
-            // no errors
+         try
+         {
+            // throws because of the previous call Try_await_within_TransactionScope_without_TransactionScopeAsyncFlowOption
+            // System.InvalidOperationException: Connection currently has transaction enlisted.  Finish current transaction and retry.
             await demos.Try_await_within_TransactionScope_with_TransactionScopeAsyncFlowOption();
-
-            try
-            {
-               // System.InvalidOperationException: A TransactionScope must be disposed on the same thread that it was created.
-               await demos.Try_await_within_TransactionScope_without_TransactionScopeAsyncFlowOption();
-            }
-            catch (Exception ex)
-            {
-               logger.LogError(0, ex, "Exception in Try_await_within_TransactionScope()");
-            }
-
-            try
-            {
-               // throws because of the previous call Try_await_within_TransactionScope_without_TransactionScopeAsyncFlowOption
-               // System.InvalidOperationException: Connection currently has transaction enlisted.  Finish current transaction and retry.
-               await demos.Try_await_within_TransactionScope_with_TransactionScopeAsyncFlowOption();
-            }
-            catch (Exception ex)
-            {
-               logger.LogError(0, ex, "Exception in Try_await_within_TransactionScope()");
-            }
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(0, ex, "Exception in Try_await_within_TransactionScope()");
          }
       }
 
@@ -467,6 +382,7 @@ namespace EntityFramework.Demo
                                                                                  // optional
                                                                                , b => b.MigrationsHistoryTable("__EFMigrationsHistory", schema)
                                                                                 )
+                                                                   .UseLoggerFactory(loggerFactory)
                                                                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>()
                                                                    .ReplaceService<IMigrationsAssembly, DbSchemaAwareMigrationAssembly>());
 

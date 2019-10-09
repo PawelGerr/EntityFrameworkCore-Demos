@@ -20,15 +20,14 @@ namespace EntityFramework.Demo.IntegrationTests
 		public async Task<bool> AddProductAsync(Guid id)
 		{
 			try
-			{
-				using (var tx = _dbContext.Database.BeginTransaction())
-				{
-					_dbContext.Products.Add(new SchemaChangeProduct { Id = id });
-					await _dbContext.SaveChangesAsync();
+         {
+            await using var tx = _dbContext.Database.BeginTransaction();
 
-					tx.Commit();
-				}
-			}
+            _dbContext.Products.Add(new SchemaChangeProduct { Id = id });
+            await _dbContext.SaveChangesAsync();
+
+            tx.Commit();
+         }
 			catch (DbUpdateException ex) when(ex.InnerException is SqlException sqlEx && sqlEx.Number == PK_VIOLATION)
 			{
 				// add logging

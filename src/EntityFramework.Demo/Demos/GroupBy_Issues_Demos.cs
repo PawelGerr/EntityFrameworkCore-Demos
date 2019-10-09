@@ -25,8 +25,15 @@ namespace EntityFramework.Demo.Demos
                                          })
                             .GroupBy(g => g.Id);
 
-         query.ToList();
-         Logger.LogInformation("Loading groups with products using ToList suceeded.");
+         try
+         {
+            query.ToList();
+            Logger.LogInformation("Loading groups with products using ToList suceeded.");
+         }
+         catch (Exception ex)
+         {
+            Logger.LogError(ex, "Loading groups with products using ToList failed.");
+         }
 
          try
          {

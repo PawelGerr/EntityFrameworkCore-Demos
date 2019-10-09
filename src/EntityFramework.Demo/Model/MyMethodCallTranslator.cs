@@ -10,11 +10,9 @@ namespace EntityFramework.Demo.Model
 {
    public class MyMethodCallTranslator : IMethodCallTranslator
    {
-      private static readonly MethodInfo _myDbFunction = typeof(DbFunctionsExtensions).GetMethod(nameof(DbFunctionsExtensions.MyDbFunction), BindingFlags.Static | BindingFlags.Public);
-
       public SqlExpression Translate(SqlExpression instance, MethodInfo method, IReadOnlyList<SqlExpression> arguments)
       {
-         if (method == _myDbFunction)
+         if (method.DeclaringType == typeof(DbFunctionsExtensions) && method.Name == nameof(DbFunctionsExtensions.MyDbFunction))
          {
             return new SqlConstantExpression(Expression.Constant(42), RelationalTypeMapping.NullMapping);
          }

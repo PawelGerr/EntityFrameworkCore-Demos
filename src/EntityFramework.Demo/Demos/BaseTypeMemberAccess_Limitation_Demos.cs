@@ -22,21 +22,26 @@ namespace EntityFramework.Demo.Demos
       {
          Expression<Func<ProductWrapper, bool>> predicate = GetPredicate<ProductWrapper>();
 
-         // Generates statement:
-         //    SELECT
-         //       [p].[Id], [p].[GroupId], [p].[Name], [p].[RowVersion]
-         //    FROM
-         //       [Products] AS [p]
-         //
-         // Generates warning:
-         //    The LINQ expression 'where (Convert(new ProductWrapper() {Product = [p]}, IProductWrapper).Product.Name != null)' could not be translated and will be evaluated locally.
-         //
-         // the filtering happens in .NET instead of in database
-         var query = Context.Products
-                            .Select(p => new ProductWrapper { Product = p })
-                            .Where(predicate);
+         /** Throws an error:
+          *
+          * System.InvalidOperationException: The LINQ expression 'Where<Product>(
+          *                                                          source: DbSet<Product>,
+          *                                                          predicate: (p) => ((IProductWrapper)new ProductWrapper{ Product = p }
+          *                                                         ).Product.Name != null)'
+          * could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to either AsEnumerable(), AsAsyncEnumerable(), ToList(), or ToListAsync().
+          */
+         try
+         {
+            var query = Context.Products
+                               .Select(p => new ProductWrapper { Product = p })
+                               .Where(predicate);
 
-         var products = query.ToList();
+            var products = query.ToList();
+         }
+         catch (Exception ex)
+         {
+            Logger.LogError(ex, "Error without rewrite.");
+         }
 
          // Generates expected statement:
          //    SELECT
@@ -54,15 +59,22 @@ namespace EntityFramework.Demo.Demos
          var products2 = query2.ToList();
 
          // no success => conversion is not the culprit
-         DoExperiment_RemoveConversion(predicate);
+         try
+         {
+            RemoveConversion(predicate);
+         }
+         catch (Exception ex)
+         {
+            Logger.LogError(ex, "Error despite the elimination of the type conversion.");
+         }
 
-         // success => EF Core stops translating query
-         // probably because the property "Product" in "Select" belongs to "ProductWrapper"
+         // Success!
+         // Cause for the exception: the property "Product" in "Select" belongs to "ProductWrapper"
          // and the property "Product" in "GetPredicate" belongs to "IProductWrapper"
-         DoExperiment_RewriteMemberAccess(predicate);
+         RewriteMemberAccess(predicate);
       }
 
-      private void DoExperiment_RemoveConversion(Expression<Func<ProductWrapper, bool>> predicate)
+      private void RemoveConversion(Expression<Func<ProductWrapper, bool>> predicate)
       {
          var visitor = new ConversionExpressionEliminatingVisitor();
          var newPredicate = (Expression<Func<ProductWrapper, bool>>)visitor.Visit(predicate);
@@ -87,7 +99,7 @@ namespace EntityFramework.Demo.Demos
          var products = query.ToList();
       }
 
-      private void DoExperiment_RewriteMemberAccess(Expression<Func<ProductWrapper, bool>> predicate)
+      private void RewriteMemberAccess(Expression<Func<ProductWrapper, bool>> predicate)
       {
          var visitor = new MemberExpressionRelinqVisitor();
          var newPredicate = (Expression<Func<ProductWrapper, bool>>)visitor.Visit(predicate);
