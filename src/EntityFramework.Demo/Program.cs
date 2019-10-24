@@ -29,6 +29,7 @@ namespace EntityFramework.Demo
          var loggerFactory = GetLoggerFactory();
          var logger = loggerFactory.CreateLogger<DemosBase>();
 
+         await NamedTransactionsDemo(loggerFactory);
          FromSqlDemo(loggerFactory);
          GlobalFiltersDemo(loggerFactory);
          MethodTranslatorDemo(loggerFactory);
@@ -45,6 +46,24 @@ namespace EntityFramework.Demo
          // DebugScaffolding();
       }
 
+      private static async Task NamedTransactionsDemo(ILoggerFactory loggerFactory)
+      {
+         var logger = loggerFactory.CreateLogger<FromSqlDemo>();
+
+         using var ctx = GetDemoContext(loggerFactory);
+         using var ctx2 = GetDemoContext(loggerFactory);
+
+         ctx.Database.EnsureCreated();
+
+         if (!ctx.Products.Any())
+            ctx.SeedData();
+
+         logger.LogInformation(" ==== {caption} ====", nameof(NamedTransactionsDemo));
+
+         var demo = new NamedTransactionsDemo(ctx, ctx2, logger);
+         await demo.StartNamedTransactionAsync();
+      }
+
       private static void FromSqlDemo(ILoggerFactory loggerFactory)
       {
          var logger = loggerFactory.CreateLogger<FromSqlDemo>();
@@ -56,7 +75,7 @@ namespace EntityFramework.Demo
          if (!ctx.Products.Any())
             ctx.SeedData();
 
-         logger.LogInformation(" ==== {caption} ====", nameof(GlobalFiltersDemo));
+         logger.LogInformation(" ==== {caption} ====", nameof(FromSqlDemo));
 
          var demo = new FromSqlDemo(ctx, logger);
          demo.FromSql_Projection_ToList();
