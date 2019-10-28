@@ -246,7 +246,7 @@ namespace EntityFramework.Demo
 			var projDir = Environment.CurrentDirectory;
 			var designArgs = Array.Empty<string>();
 
-			var dbOperations = new DatabaseOperations(operationReporter, currentAssembly, projDir, "EntityFramework.Demo", "C#", designArgs);
+			var dbOperations = new DatabaseOperations(operationReporter, currentAssembly, currentAssembly, projDir, "EntityFramework.Demo", "C#", designArgs);
 			var files = dbOperations.ScaffoldContext(
 																 "Microsoft.EntityFrameworkCore.SqlServer",
 																 "Server=(local);Database=TptDemo;Trusted_Connection=True;MultipleActiveResultSets=true",
