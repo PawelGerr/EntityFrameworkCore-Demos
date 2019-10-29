@@ -63,6 +63,7 @@ namespace EntityFramework.Demo
          var demo = new NavigationPropertiesAlternativeQueriesDemo(ctx, logger);
          demo.UseNavigationalProperty();
          demo.WithoutNavigationalProperty();
+         demo.WithoutNavigationalPropertyAndWithoutParentDbSet();
       }
 
       private static async Task NamedTransactionsDemo(ILoggerFactory loggerFactory)

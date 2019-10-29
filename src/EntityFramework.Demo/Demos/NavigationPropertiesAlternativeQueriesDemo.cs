@@ -61,5 +61,39 @@ namespace EntityFramework.Demo.Demos
 
          Print("Loaded without using navigational property", groups);
       }
+
+      public void WithoutNavigationalPropertyAndWithoutParentDbSet()
+      {
+         // Generated query:
+         //
+         //    SELECT [t].[GroupId], [t1].[Id], [t1].[GroupId], [t1].[Name], [t1].[RowVersion]
+         //    FROM
+         //    (
+         //        SELECT DISTINCT [p].[GroupId]
+         //        FROM [Products] AS [p]
+         //    ) AS [t]
+         //    LEFT JOIN
+         //    (
+         //         SELECT [t0].[Id], [t0].[GroupId], [t0].[Name], [t0].[RowVersion]
+         //         FROM
+         //         (
+         //            SELECT [p0].[Id], [p0].[GroupId], [p0].[Name], [p0].[RowVersion], ROW_NUMBER() OVER(PARTITION BY [p0].[GroupId] ORDER BY [p0].[Name]) AS [row]
+         //            FROM [Products] AS [p0]
+         //         ) AS [t0]
+         //         WHERE [t0].[row] <= 1
+         //    ) AS [t1] ON [t].[GroupId] = [t1].[GroupId]
+
+         var groups = Context.Products
+                             .Select(p => p.GroupId)
+                             .Distinct()
+                             .Select(g => new
+                                          {
+                                             Group = g,
+                                             FirstProduct = Context.Products.OrderBy(p => p.Name).FirstOrDefault(p => p.GroupId == g)
+                                          })
+                             .ToList();
+
+         Print("Loaded without using navigational property and without ProductGroups", groups);
+      }
    }
 }
