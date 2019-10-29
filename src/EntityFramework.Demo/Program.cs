@@ -29,6 +29,7 @@ namespace EntityFramework.Demo
          var loggerFactory = GetLoggerFactory();
          var logger = loggerFactory.CreateLogger<DemosBase>();
 
+         NavigationPropertiesAlternativeQueries(loggerFactory);
          await NamedTransactionsDemo(loggerFactory);
          FromSqlDemo(loggerFactory);
          GlobalFiltersDemo(loggerFactory);
@@ -44,6 +45,24 @@ namespace EntityFramework.Demo
          await ExecuteGroupByIssuesDemoAsync(loggerFactory, logger);
 
          // DebugScaffolding();
+      }
+
+      private static void NavigationPropertiesAlternativeQueries(ILoggerFactory loggerFactory)
+      {
+         var logger = loggerFactory.CreateLogger<NavigationPropertiesAlternativeQueriesDemo>();
+
+         using var ctx = GetDemoContext(loggerFactory);
+
+         ctx.Database.EnsureCreated();
+
+         if (!ctx.Products.Any())
+            ctx.SeedData();
+
+         logger.LogInformation(" ==== {caption} ====", nameof(NavigationPropertiesAlternativeQueries));
+
+         var demo = new NavigationPropertiesAlternativeQueriesDemo(ctx, logger);
+         demo.UseNavigationalProperty();
+         demo.WithoutNavigationalProperty();
       }
 
       private static async Task NamedTransactionsDemo(ILoggerFactory loggerFactory)
