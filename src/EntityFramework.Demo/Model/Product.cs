@@ -11,11 +11,11 @@ namespace EntityFramework.Demo.Model
 		public string Name { get; set; }
 
 		public Guid GroupId { get; set; }
-		public ProductGroup Group { get; set; }
+		public virtual ProductGroup Group { get; set; }
 
       public ulong RowVersion { get; set; }
 
-      public List<ProductTranslation> Translations { get; set; }
+      public virtual List<ProductTranslation> Translations { get; set; }
 
 		public override string ToString()
       {

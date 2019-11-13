@@ -13,6 +13,7 @@ using EntityFramework.Demo.TptModel.DatabaseFirst;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,7 @@ namespace EntityFramework.Demo
          var loggerFactory = GetLoggerFactory();
          var logger = loggerFactory.CreateLogger<DemosBase>();
 
+         LazyLoadingDemo(loggerFactory);
          NavigationPropertiesAlternativeQueries(loggerFactory);
          await NamedTransactionsDemo(loggerFactory);
          FromSqlDemo(loggerFactory);
@@ -45,6 +47,24 @@ namespace EntityFramework.Demo
          await ExecuteGroupByIssuesDemoAsync(loggerFactory, logger);
 
          // DebugScaffolding();
+      }
+
+      private static void LazyLoadingDemo(ILoggerFactory loggerFactory)
+      {
+         var logger = loggerFactory.CreateLogger<LazyLoadingDemo>();
+
+         using var ctx = GetDemoContext(loggerFactory, true);
+
+         ctx.Database.EnsureCreated();
+
+         if (!ctx.Products.Any())
+            ctx.SeedData();
+
+         logger.LogInformation(" ==== {caption} ====", nameof(LazyLoadingDemo));
+
+         var demo = new LazyLoadingDemo(ctx, logger);
+         demo.BuildLookup_with_change_tracking();
+         demo.BuildLookup_without_change_tracking();
       }
 
       private static void NavigationPropertiesAlternativeQueries(ILoggerFactory loggerFactory)
@@ -394,9 +414,9 @@ namespace EntityFramework.Demo
             .AddSerilog(serilog);
       }
 
-      private static DemoDbContext GetDemoContext(ILoggerFactory loggerFactory)
+      private static DemoDbContext GetDemoContext(ILoggerFactory loggerFactory, bool withLazyLoading = false)
       {
-         return GetDbContext<DemoDbContext>(loggerFactory, "Demo", o => new DemoDbContext(o));
+         return GetDbContext<DemoDbContext>(loggerFactory, "Demo", o => new DemoDbContext(o), withLazyLoading);
       }
 
       public static TphDbContext GetTphContext(ILoggerFactory loggerFactory)
@@ -452,20 +472,30 @@ namespace EntityFramework.Demo
          return serviceProvider.GetRequiredService<SchemaChangeDbContext>();
       }
 
-      private static T GetDbContext<T>(ILoggerFactory loggerFactory, string dbName, Func<DbContextOptions<T>, T> ctxFactory)
+      private static T GetDbContext<T>(
+         ILoggerFactory loggerFactory,
+         string dbName,
+         Func<DbContextOptions<T>, T> ctxFactory,
+         bool withLazyLoading = false)
          where T : DbContext
       {
-         var optionsBuilder = GetDbContextOptionsBuilder<T>(loggerFactory, dbName);
+         var optionsBuilder = GetDbContextOptionsBuilder<T>(loggerFactory, dbName, withLazyLoading);
          return ctxFactory(optionsBuilder.Options);
       }
 
-      private static DbContextOptionsBuilder<T> GetDbContextOptionsBuilder<T>(ILoggerFactory loggerFactory, string dbName)
+      private static DbContextOptionsBuilder<T> GetDbContextOptionsBuilder<T>(
+         ILoggerFactory loggerFactory,
+         string dbName,
+         bool withLazyLoading = false)
          where T : DbContext
       {
          var builder = new DbContextOptionsBuilder<T>()
                        .UseSqlServer($"Server=(local);Database={dbName};Trusted_Connection=True;MultipleActiveResultSets=true")
                        .UseLoggerFactory(loggerFactory)
                        .EnableSensitiveDataLogging();
+
+         if (withLazyLoading)
+            builder.UseLazyLoadingProxies();
 
          if (typeof(T) == typeof(DemoDbContext))
          {

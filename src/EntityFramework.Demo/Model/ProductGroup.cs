@@ -10,7 +10,7 @@ namespace EntityFramework.Demo.Model
 
       public ulong RowVersion { get; set; }
 
-		public ICollection<Product> Products { get; set; }
+		public virtual ICollection<Product> Products { get; set; }
 
 		public override string ToString()
 		{
