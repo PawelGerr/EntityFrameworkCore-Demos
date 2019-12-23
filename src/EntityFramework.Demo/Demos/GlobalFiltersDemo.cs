@@ -19,7 +19,7 @@ namespace EntityFramework.Demo.Demos
          /**
           * Generated query:
           *
-          * [Parameters=[@__ef_filter__p_0='True', @__ef_filter___localeFilter_1='']
+          * [Parameters=[@__ef_filter__p_0='True']
           *
           * SELECT [t].[Id], [t].[GroupId], [t].[Name], [t].[RowVersion], [t0].[ProductId], [t0].[Locale], [t0].[Description]
           * FROM (
@@ -30,7 +30,7 @@ namespace EntityFramework.Demo.Demos
           * LEFT JOIN (
           *    SELECT [p0].[ProductId], [p0].[Locale], [p0].[Description]
           *    FROM [ProductTranslation] AS [p0]
-          *    WHERE (@__ef_filter__p_0 = CAST(1 AS bit)) OR (([p0].[Locale] = @__ef_filter___localeFilter_1) AND @__ef_filter___localeFilter_1 IS NOT NULL)
+          *    WHERE @__ef_filter__p_0 = CAST(1 AS bit)
           * ) AS [t0] ON [t].[Id] = [t0].[ProductId]
           * ORDER BY [t].[Name], [t].[Id], [t0].[ProductId], [t0].[Locale]
           */
@@ -59,7 +59,7 @@ namespace EntityFramework.Demo.Demos
           * LEFT JOIN (
           *    SELECT [p0].[ProductId], [p0].[Locale], [p0].[Description]
           *    FROM [ProductTranslation] AS [p0]
-          *    WHERE (@__ef_filter__p_0 = CAST(1 AS bit)) OR (([p0].[Locale] = @__ef_filter___localeFilter_1) AND @__ef_filter___localeFilter_1 IS NOT NULL)
+          *    WHERE (@__ef_filter__p_0 = CAST(1 AS bit)) OR ([p0].[Locale] = @__ef_filter___localeFilter_1)
           * ) AS [t0] ON [t].[Id] = [t0].[ProductId]
           * ORDER BY [t].[Name], [t].[Id], [t0].[ProductId], [t0].[Locale]
           */
