@@ -5,19 +5,25 @@ using Microsoft.EntityFrameworkCore.Internal;
 
 namespace EntityFramework.Demo.Model
 {
-	public class Product
-	{
-		public Guid Id { get; set; }
-		public string Name { get; set; }
+   public class Product
+   {
+      public Guid Id { get; set; }
+      public string Name { get; set; }
 
-		public Guid GroupId { get; set; }
-		public virtual ProductGroup Group { get; set; }
+      public Guid GroupId { get; set; }
+      public virtual ProductGroup Group { get; set; }
 
       public ulong RowVersion { get; set; }
 
       public virtual List<ProductTranslation> Translations { get; set; }
 
-		public override string ToString()
+#nullable disable
+      public Product()
+      {
+      }
+#nullable enable
+
+      public override string ToString()
       {
          var sb = new StringBuilder();
          sb.Append("{ Name = ").Append(Name);
@@ -38,7 +44,7 @@ namespace EntityFramework.Demo.Model
          }
 
          sb.Append(" }");
-			return sb.ToString();
-		}
-	}
+         return sb.ToString();
+      }
+   }
 }

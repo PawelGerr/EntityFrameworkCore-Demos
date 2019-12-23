@@ -3,46 +3,48 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EntityFramework.Demo.TphModel.CodeFirst
 {
-	public class TphDbContext : DbContext
-	{
-		public DbSet<PersonTph> People { get; set; }
-		public DbSet<CustomerTph> Customers { get; set; }
-		public DbSet<EmployeeTph> Employees { get; set; }
+   public class TphDbContext : DbContext
+   {
+#nullable disable
+      public DbSet<PersonTph> People { get; set; }
+      public DbSet<CustomerTph> Customers { get; set; }
+      public DbSet<EmployeeTph> Employees { get; set; }
+#nullable enable
 
-		public TphDbContext(DbContextOptions<TphDbContext> options)
-			: base(options)
-		{
-		}
+      public TphDbContext(DbContextOptions<TphDbContext> options)
+         : base(options)
+      {
+      }
 
-		public void SeedData()
-		{
-			DeleteAll();
+      public void SeedData()
+      {
+         DeleteAll();
 
-			Customers.Add(new CustomerTph()
-								{
-									Id = Guid.NewGuid(),
-									FirstName = "John",
-									LastName = "Foo",
-									DateOfBirth = new DateTime(1980, 1, 1)
-								});
+         Customers.Add(new CustomerTph
+                       {
+                          Id = Guid.NewGuid(),
+                          FirstName = "John",
+                          LastName = "Foo",
+                          DateOfBirth = new DateTime(1980, 1, 1)
+                       });
 
-			Employees.Add(new EmployeeTph()
-								{
-									Id = Guid.NewGuid(),
-									FirstName = "Max",
-									LastName = "Bar",
-									Turnover = 1000
-								});
+         Employees.Add(new EmployeeTph
+                       {
+                          Id = Guid.NewGuid(),
+                          FirstName = "Max",
+                          LastName = "Bar",
+                          Turnover = 1000
+                       });
 
-			SaveChanges();
-		}
+         SaveChanges();
+      }
 
-		private void DeleteAll()
-		{
-			Customers.RemoveRange(Customers);
-			Employees.RemoveRange(Employees);
+      private void DeleteAll()
+      {
+         Customers.RemoveRange(Customers);
+         Employees.RemoveRange(Employees);
 
-			SaveChanges();
-		}
-	}
+         SaveChanges();
+      }
+   }
 }

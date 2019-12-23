@@ -1,5 +1,4 @@
 ﻿using System;
-using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Design;
 
 namespace EntityFramework.Demo.CodeGeneration
@@ -8,7 +7,7 @@ namespace EntityFramework.Demo.CodeGeneration
    {
       private readonly Inflector.Inflector _inflector;
 
-      public Pluralizer([NotNull] Inflector.Inflector inflector)
+      public Pluralizer(Inflector.Inflector inflector)
       {
          _inflector = inflector ?? throw new ArgumentNullException(nameof(inflector));
       }

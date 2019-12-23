@@ -4,9 +4,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
 using EntityFramework.Demo.Model;
-using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Logging;
+
+#pragma warning disable EF1001
 
 namespace EntityFramework.Demo.Demos
 {
@@ -123,7 +124,6 @@ namespace EntityFramework.Demo.Demos
          var products = query.ToList();
       }
 
-      [NotNull]
       private static Expression<Func<T, bool>> GetPredicate<T>()
          where T : IProductWrapper
       {
@@ -133,6 +133,12 @@ namespace EntityFramework.Demo.Demos
       private class ProductWrapper : IProductWrapper
       {
          public Product Product { get; set; }
+
+#nullable disable
+         public ProductWrapper()
+         {
+         }
+#nullable enable
       }
 
       private interface IProductWrapper
@@ -178,21 +184,18 @@ namespace EntityFramework.Demo.Demos
          }
       }
 
-      [CanBeNull]
-      private static MemberInfo FindProperty([NotNull] Type type, [NotNull] string memberName, Type memberType)
+      private static MemberInfo? FindProperty(Type type, string memberName, Type memberType)
       {
          return type.GetProperty(memberName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, memberType, Array.Empty<Type>(), null);
       }
 
-      [CanBeNull]
-      private static MemberInfo FindField([NotNull] Type type, string memberName, Type memberType)
+      private static MemberInfo? FindField(Type type, string memberName, Type memberType)
       {
          return type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                     .FirstOrDefault(fieldInfo => fieldInfo.Name == memberName && fieldInfo.FieldType == memberType);
       }
 
-      [NotNull]
-      private static Type GetMemberReturnType([NotNull] MemberInfo member)
+      private static Type GetMemberReturnType(MemberInfo member)
       {
          if (member == null)
             throw new ArgumentNullException(nameof(member));

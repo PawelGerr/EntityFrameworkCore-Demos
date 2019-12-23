@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using EntityFramework.Demo.Model;
-using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -9,7 +8,7 @@ namespace EntityFramework.Demo.Demos
 {
    public class GlobalFiltersDemo : DemosBase
    {
-      public GlobalFiltersDemo([NotNull] DemoDbContext ctx, [NotNull] ILogger<GlobalFiltersDemo> logger)
+      public GlobalFiltersDemo(DemoDbContext ctx, ILogger<GlobalFiltersDemo> logger)
          : base(ctx, logger)
       {
          Context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
@@ -44,7 +43,7 @@ namespace EntityFramework.Demo.Demos
          Logger.LogInformation("Found product: {@product}", product);
       }
 
-      public void LoadTranslationsWithLocaleFilter([NotNull] string locale)
+      public void LoadTranslationsWithLocaleFilter(string locale)
       {
          /**
           * Generated query:

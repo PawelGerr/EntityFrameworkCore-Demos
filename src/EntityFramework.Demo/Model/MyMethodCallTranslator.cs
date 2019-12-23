@@ -10,7 +10,7 @@ namespace EntityFramework.Demo.Model
 {
    public class MyMethodCallTranslator : IMethodCallTranslator
    {
-      public SqlExpression Translate(SqlExpression instance, MethodInfo method, IReadOnlyList<SqlExpression> arguments)
+      public SqlExpression? Translate(SqlExpression instance, MethodInfo method, IReadOnlyList<SqlExpression> arguments)
       {
          if (method.DeclaringType == typeof(DbFunctionsExtensions) && method.Name == nameof(DbFunctionsExtensions.MyDbFunction))
          {

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -9,10 +8,12 @@ namespace EntityFramework.Demo.Model
 {
    public class DemoDbContext : DbContext
    {
+#nullable disable
       public DbSet<Product> Products { get; set; }
       public DbSet<ProductGroup> ProductGroups { get; set; }
+#nullable enable
 
-      private string _localeFilter;
+      private string? _localeFilter;
 
       public DemoDbContext(DbContextOptions<DemoDbContext> options)
          : base(options)
@@ -24,27 +25,35 @@ namespace EntityFramework.Demo.Model
       {
          base.OnModelCreating(modelBuilder);
 
-         modelBuilder.Entity<Product>()
-                     .Property(p => p.RowVersion)
-                     .HasColumnType("RowVersion")
-                     .IsRowVersion()
-                     .HasConversion(new NumberToBytesConverter<ulong>());
+         modelBuilder.Entity<Product>(b =>
+                                      {
+                                         b.Property(p => p.Name).IsRequired().HasMaxLength(100);
 
-         var translationBuilder = modelBuilder.Entity<ProductTranslation>();
-         translationBuilder.Property(t => t.Locale).IsRequired().HasMaxLength(10);
-         translationBuilder.Property(t => t.Description).IsRequired().HasMaxLength(200);
-         translationBuilder.HasKey(t => new { t.ProductId, t.Locale });
-         translationBuilder.HasQueryFilter(t => _localeFilter == null || t.Locale == _localeFilter);
+                                         b.Property(p => p.RowVersion)
+                                          .HasColumnType("RowVersion")
+                                          .IsRowVersion()
+                                          .HasConversion(new NumberToBytesConverter<ulong>());
+                                      });
 
-         modelBuilder.Entity<ProductGroup>()
-                     .Property(p => p.RowVersion)
-                     .HasColumnType("RowVersion")
-                     .IsRowVersion()
-                     .HasConversion(new RowVersionValueConverter());
+         modelBuilder.Entity<ProductTranslation>(b =>
+                                                 {
+                                                    b.Property(t => t.Locale).IsRequired().HasMaxLength(10);
+                                                    b.Property(t => t.Description).IsRequired().HasMaxLength(200);
+                                                    b.HasKey(t => new { t.ProductId, t.Locale });
+                                                    b.HasQueryFilter(t => _localeFilter == null || t.Locale == _localeFilter);
+                                                 });
+
+         modelBuilder.Entity<ProductGroup>(b =>
+                                           {
+                                              b.Property(p => p.Name).IsRequired().HasMaxLength(200);
+                                              b.Property(p => p.RowVersion)
+                                               .HasColumnType("RowVersion")
+                                               .IsRowVersion()
+                                               .HasConversion(new RowVersionValueConverter());
+                                           });
       }
 
-      [NotNull]
-      public IDisposable SetTranslationFilter([NotNull] string locale)
+      public IDisposable SetTranslationFilter(string locale)
       {
          if (locale == null)
             throw new ArgumentNullException(nameof(locale));
@@ -102,7 +111,7 @@ namespace EntityFramework.Demo.Model
       {
          for (int i = 0; i < numberOfProducts; i++)
          {
-            var productGroup = new ProductGroup()
+            var productGroup = new ProductGroup
                                {
                                   Id = Guid.NewGuid(),
                                   Name = $"Product Group {i}"
@@ -128,7 +137,7 @@ namespace EntityFramework.Demo.Model
       {
          private readonly DemoDbContext _ctx;
 
-         public FilterReset([NotNull] DemoDbContext ctx)
+         public FilterReset(DemoDbContext ctx)
          {
             _ctx = ctx ?? throw new ArgumentNullException(nameof(ctx));
          }

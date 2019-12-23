@@ -3,11 +3,17 @@ using System.Collections.Generic;
 
 namespace EntityFramework.Demo.TptModel.DatabaseFirst
 {
-    public partial class Customer
-    {
-        public Guid Id { get; set; }
-        public DateTime DateOfBirth { get; set; }
+   public partial class Customer
+   {
+      public Guid Id { get; set; }
+      public DateTime DateOfBirth { get; set; }
 
-        public Person Person { get; set; }
-    }
+      public Person Person { get; set; }
+
+#nullable disable
+      public Customer()
+      {
+      }
+#nullable enable
+   }
 }

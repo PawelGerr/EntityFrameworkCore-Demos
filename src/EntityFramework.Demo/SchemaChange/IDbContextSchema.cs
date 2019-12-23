@@ -4,6 +4,6 @@ namespace EntityFramework.Demo.SchemaChange
 {
 	public interface IDbContextSchema
 	{
-		string Schema { get; }
+		string? Schema { get; }
 	}
 }

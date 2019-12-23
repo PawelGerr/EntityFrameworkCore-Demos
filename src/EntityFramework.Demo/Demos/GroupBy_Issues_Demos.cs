@@ -28,7 +28,7 @@ namespace EntityFramework.Demo.Demos
          try
          {
             query.ToList();
-            Logger.LogInformation("Loading groups with products using ToList suceeded.");
+            Logger.LogInformation("Loading groups with products using ToList succeeded.");
          }
          catch (Exception ex)
          {
@@ -38,7 +38,7 @@ namespace EntityFramework.Demo.Demos
          try
          {
             await query.ToListAsync();
-            Logger.LogInformation("Loading groups with products using ToListAsync suceeded.");
+            Logger.LogInformation("Loading groups with products using ToListAsync succeeded.");
          }
          catch (Exception ex)
          {

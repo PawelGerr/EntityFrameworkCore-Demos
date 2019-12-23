@@ -6,9 +6,9 @@ namespace EntityFramework.Demo.SchemaChange
 {
 	public class SchemaChangeProductEntityConfiguration : IEntityTypeConfiguration<SchemaChangeProduct>
 	{
-		private readonly string _schema;
+		private readonly string? _schema;
 
-		public SchemaChangeProductEntityConfiguration(string schema)
+		public SchemaChangeProductEntityConfiguration(string? schema)
 		{
 			_schema = schema;
 		}

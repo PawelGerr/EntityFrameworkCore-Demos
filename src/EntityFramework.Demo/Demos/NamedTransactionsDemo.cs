@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using EntityFramework.Demo.Model;
-using JetBrains.Annotations;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -13,7 +12,7 @@ namespace EntityFramework.Demo.Demos
 {
    public static class DatabaseFacadeExtensions
    {
-      public static IDbContextTransaction BeginTransaction([NotNull] this DatabaseFacade database, string name)
+      public static IDbContextTransaction BeginTransaction(this DatabaseFacade database, string name)
       {
          database.OpenConnection();
 
@@ -29,7 +28,7 @@ namespace EntityFramework.Demo.Demos
       private readonly DemoDbContext _anotherContext;
 
       /// <inheritdoc />
-      public NamedTransactionsDemo(DemoDbContext ctx, [NotNull] DemoDbContext anotherContext, ILogger logger)
+      public NamedTransactionsDemo(DemoDbContext ctx, DemoDbContext anotherContext, ILogger logger)
          : base(ctx, logger)
       {
          _anotherContext = anotherContext ?? throw new ArgumentNullException(nameof(anotherContext));

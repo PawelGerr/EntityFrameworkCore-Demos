@@ -13,13 +13,14 @@ using EntityFramework.Demo.TptModel.DatabaseFirst;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
+
+#pragma warning disable EF1001
 
 namespace EntityFramework.Demo
 {
@@ -55,10 +56,7 @@ namespace EntityFramework.Demo
 
          using var ctx = GetDemoContext(loggerFactory, true);
 
-         ctx.Database.EnsureCreated();
-
-         if (!ctx.Products.Any())
-            ctx.SeedData();
+         SeedData(ctx, loggerFactory);
 
          logger.LogInformation(" ==== {caption} ====", nameof(LazyLoadingDemo));
 
@@ -73,10 +71,7 @@ namespace EntityFramework.Demo
 
          using var ctx = GetDemoContext(loggerFactory);
 
-         ctx.Database.EnsureCreated();
-
-         if (!ctx.Products.Any())
-            ctx.SeedData();
+         SeedData(ctx, loggerFactory);
 
          logger.LogInformation(" ==== {caption} ====", nameof(NavigationPropertiesAlternativeQueries));
 
@@ -93,10 +88,7 @@ namespace EntityFramework.Demo
          using var ctx = GetDemoContext(loggerFactory);
          using var ctx2 = GetDemoContext(loggerFactory);
 
-         ctx.Database.EnsureCreated();
-
-         if (!ctx.Products.Any())
-            ctx.SeedData();
+         SeedData(ctx, loggerFactory);
 
          logger.LogInformation(" ==== {caption} ====", nameof(NamedTransactionsDemo));
 
@@ -110,10 +102,7 @@ namespace EntityFramework.Demo
 
          using var ctx = GetDemoContext(loggerFactory);
 
-         ctx.Database.EnsureCreated();
-
-         if (!ctx.Products.Any())
-            ctx.SeedData();
+         SeedData(ctx, loggerFactory);
 
          logger.LogInformation(" ==== {caption} ====", nameof(FromSqlDemo));
 
@@ -128,10 +117,7 @@ namespace EntityFramework.Demo
 
          using var ctx = GetDemoContext(loggerFactory);
 
-         ctx.Database.EnsureCreated();
-
-         if (!ctx.Products.Any())
-            ctx.SeedData();
+         SeedData(ctx, loggerFactory);
 
          logger.LogInformation(" ==== {caption} ====", nameof(GlobalFiltersDemo));
 
@@ -146,10 +132,7 @@ namespace EntityFramework.Demo
 
          using var ctx = GetDemoContext(loggerFactory);
 
-         ctx.Database.EnsureCreated();
-
-         if (!ctx.Products.Any())
-            ctx.SeedData();
+         SeedData(ctx, loggerFactory);
 
          logger.LogInformation(" ==== {caption} ====", nameof(MethodTranslatorDemo));
 
@@ -163,10 +146,7 @@ namespace EntityFramework.Demo
       {
          await using var ctx = GetDemoContext(loggerFactory);
 
-         ctx.Database.EnsureCreated();
-
-         if (!ctx.Products.Any())
-            ctx.SeedData();
+         SeedData(ctx, loggerFactory);
 
          logger.LogInformation(" ==== {caption} ====", nameof(ExecuteGroupByIssuesDemoAsync));
 
@@ -185,10 +165,7 @@ namespace EntityFramework.Demo
       {
          using var ctx = GetDemoContext(loggerFactory);
 
-         ctx.Database.EnsureCreated();
-
-         if (!ctx.Products.Any())
-            ctx.SeedData();
+         SeedData(ctx, loggerFactory);
 
          logger.LogInformation(" ==== {caption} ====", nameof(ExecuteBaseTypeMemberAccessLimitationDemo));
 
@@ -207,10 +184,7 @@ namespace EntityFramework.Demo
       {
          using var ctx = GetDemoContext(loggerFactory);
 
-         ctx.Database.EnsureCreated();
-
-         if (!ctx.Products.Any())
-            ctx.SeedData();
+         SeedData(ctx, loggerFactory);
 
          logger.LogInformation(" ==== {caption} ====", nameof(N_Plus_One_Queries));
          var demos = new N_Plus_One_Queries(ctx, logger);
@@ -230,10 +204,7 @@ namespace EntityFramework.Demo
       {
          using var ctx = GetTphContext(loggerFactory);
 
-         ctx.Database.Migrate();
-
-         if (!ctx.People.Any())
-            ctx.SeedData();
+         SeedData(ctx, loggerFactory);
 
          logger.LogInformation(" ==== {caption} ====", nameof(Tph_Queries));
 
@@ -246,10 +217,7 @@ namespace EntityFramework.Demo
       {
          using var ctx = GetTptContext(loggerFactory);
 
-         ctx.Database.Migrate();
-
-         if (!ctx.People.Any())
-            ctx.SeedData();
+         SeedData(ctx, loggerFactory);
 
          logger.LogInformation(" ==== {caption} ====", nameof(Tpt_Queries));
 
@@ -439,7 +407,7 @@ namespace EntityFramework.Demo
          return GetDbContext<ScaffoldedTptDbContext>(loggerFactory, "TptDemo", o => new ScaffoldedTptDbContext(o));
       }
 
-      public static SchemaChangeDbContext GetSchemaChangeDbContext(ILoggerFactory loggerFactory, string schema = null)
+      public static SchemaChangeDbContext GetSchemaChangeDbContext(ILoggerFactory loggerFactory, string? schema = null)
       {
          var optionsBuilder = new DbContextOptionsBuilder<SchemaChangeDbContext>()
                               .UseSqlServer("Server=(local);Database=SchemaChangeDemo;Trusted_Connection=True;MultipleActiveResultSets=true"
@@ -453,7 +421,7 @@ namespace EntityFramework.Demo
          return new SchemaChangeDbContext(optionsBuilder.Options, schema == null ? null : new DbContextSchema(schema));
       }
 
-      public static SchemaChangeDbContext GetSchemaChangeDbContextViaServiceProvider(ILoggerFactory loggerFactory, string schema = null)
+      public static SchemaChangeDbContext GetSchemaChangeDbContextViaServiceProvider(ILoggerFactory loggerFactory, string? schema = null)
       {
          var services = new ServiceCollection()
             .AddDbContext<SchemaChangeDbContext>(builder => builder.UseSqlServer("Server=(local);Database=SchemaChangeDemo;Trusted_Connection=True;MultipleActiveResultSets=true"
@@ -470,6 +438,39 @@ namespace EntityFramework.Demo
          var serviceProvider = services.BuildServiceProvider();
 
          return serviceProvider.GetRequiredService<SchemaChangeDbContext>();
+      }
+
+      private static void SeedData(TptDbContext ctx, ILoggerFactory loggerFactory)
+      {
+         ctx.Database.Migrate();
+
+         if (ctx.People.Any())
+            return;
+
+         using var innerCtx = GetTphContext(loggerFactory);
+         innerCtx.SeedData();
+      }
+
+      private static void SeedData(TphDbContext ctx, ILoggerFactory loggerFactory)
+      {
+         ctx.Database.Migrate();
+
+         if (ctx.People.Any())
+            return;
+
+         using var innerCtx = GetTphContext(loggerFactory);
+         innerCtx.SeedData();
+      }
+
+      private static void SeedData(DemoDbContext ctx, ILoggerFactory loggerFactory)
+      {
+         ctx.Database.EnsureCreated();
+
+         if (ctx.Products.Any())
+            return;
+
+         using var innerCtx = GetDemoContext(loggerFactory, true);
+         innerCtx.SeedData();
       }
 
       private static T GetDbContext<T>(

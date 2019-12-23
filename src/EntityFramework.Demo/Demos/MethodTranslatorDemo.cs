@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using EntityFramework.Demo.Model;
-using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -12,7 +11,7 @@ namespace EntityFramework.Demo.Demos
       private readonly DemoDbContext _ctx;
       private readonly ILogger<MethodTranslatorDemo> _logger;
 
-      public MethodTranslatorDemo([NotNull] DemoDbContext ctx, [NotNull] ILogger<MethodTranslatorDemo> logger)
+      public MethodTranslatorDemo(DemoDbContext ctx, ILogger<MethodTranslatorDemo> logger)
       {
          _ctx = ctx ?? throw new ArgumentNullException(nameof(ctx));
          _logger = logger ?? throw new ArgumentNullException(nameof(logger));

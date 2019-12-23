@@ -44,8 +44,8 @@ namespace EntityFramework.Demo.IntegrationTests
 		public void Dispose()
 		{
 			DbContext.GetService<IMigrator>().Migrate("0");
-			DbContext.Database.ExecuteSqlCommand((string)$"DROP TABLE [{_schema}].[{_historyTableName}]");
-			DbContext.Database.ExecuteSqlCommand((string)$"DROP SCHEMA [{_schema}]");
+			DbContext.Database.ExecuteSqlRaw($"DROP TABLE [{_schema}].[{_historyTableName}]");
+			DbContext.Database.ExecuteSqlRaw($"DROP SCHEMA [{_schema}]");
 
 			DbContext?.Dispose();
 		}
